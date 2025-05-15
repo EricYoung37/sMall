@@ -6,12 +6,37 @@
 
     <groupId>com.sMall</groupId>
     <artifactId>sMall</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.0.1-SNAPSHOT</version>
+    <!--the root produces no output artifact — it just manages and builds child modules-->
+    <packaging>pom</packaging>
+
+    <!--the submodules that should be built as part of the overall project-->
+    <modules>
+    </modules>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <jdk.version>17</jdk.version>
+        <spring.boot.version>3.2.5</spring.boot.version>
+        <maven.compiler.source>${jdk.version}</maven.compiler.source>
+        <maven.compiler.target>${jdk.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <!--centralized version management for Spring Boot and related dependencies-->
+    <!--submodules do not need to explicitly specify versions for dependencies like spring-boot-starter-web-->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <!--the artifact being referenced is a POM file, not a JAR-->
+                <type>pom</type>
+                <!--only valid inside <dependencyManagement>-->
+                <!--import all the dependency version management information from that external POM (BOM)-->
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
 </project>
