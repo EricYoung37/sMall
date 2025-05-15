@@ -1,0 +1,62 @@
+package com.small.backend.accountservice.service.impl;
+
+import com.small.backend.accountservice.dao.UserAccountRepository;
+import com.small.backend.accountservice.dto.CreateAccountRequest;
+import com.small.backend.accountservice.dto.UpdateAccountRequest;
+import com.small.backend.accountservice.entity.UserAccount;
+import com.small.backend.accountservice.service.AccountService;
+import exception.ResourceNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.UUID;
+
+@Service
+public class AccountServiceImpl implements AccountService {
+
+    private final UserAccountRepository repository;
+    private final BCryptPasswordEncoder passwordEncoder;
+
+    public AccountServiceImpl(UserAccountRepository repository) {
+        this.repository = repository;
+        this.passwordEncoder = new BCryptPasswordEncoder();
+    }
+
+    @Override
+    public UserAccount createAccount(CreateAccountRequest request) {
+        UserAccount user = new UserAccount();
+        user.setEmail(request.getEmail());
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setShippingAddress(request.getShippingAddress());
+        user.setBillingAddress(request.getBillingAddress());
+        user.setPaymentMethod(request.getPaymentMethod());
+        return repository.save(user);
+    }
+
+    @Override
+    public UserAccount updateAccount(UUID id, UpdateAccountRequest request) {
+        UserAccount existing = repository.findById(id).orElseThrow(
+                () -> new ResourceNotFoundException("User with ID " + id + " not found")
+        );
+        existing.setUsername(request.getUsername());
+        existing.setShippingAddress(request.getShippingAddress());
+        existing.setBillingAddress(request.getBillingAddress());
+        existing.setPaymentMethod(request.getPaymentMethod());
+        return repository.save(existing);
+    }
+
+    @Override
+    public UserAccount getAccountById(UUID id) {
+        return repository.findById(id).orElseThrow(
+                () -> new ResourceNotFoundException("User with ID " + id + " not found")
+        );
+    }
+
+    @Override
+    public UserAccount getAccountByEmail(String email) {
+        return repository.findByEmail(email).orElseThrow(
+                () -> new ResourceNotFoundException("User with email " + email + " not found")
+        );
+    }
+}
