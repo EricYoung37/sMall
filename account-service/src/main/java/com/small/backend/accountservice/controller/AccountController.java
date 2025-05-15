@@ -28,17 +28,17 @@ public class AccountController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserAccount> update(@PathVariable UUID id, @RequestBody @Valid UpdateAccountRequest request) {
+    public ResponseEntity<UserAccount> update(@PathVariable("id") UUID id, @RequestBody @Valid UpdateAccountRequest request) {
         return ResponseEntity.ok(service.updateAccount(id, request));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserAccount> getById(@PathVariable UUID id) {
+    public ResponseEntity<UserAccount> getById(@PathVariable("id") UUID id) {
         return ResponseEntity.ok(service.getAccountById(id));
     }
 
     @GetMapping("/email/{email}")
-    public ResponseEntity<UserAccount> getAccountByEmail(@PathVariable String email) {
+    public ResponseEntity<UserAccount> getAccountByEmail(@PathVariable("email") String email) {
         UserAccount userAccount = service.getAccountByEmail(email);
         return ResponseEntity.ok(userAccount);
     }
