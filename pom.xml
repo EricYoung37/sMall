@@ -12,6 +12,7 @@
 
     <!--the submodules that should be built as part of the overall project-->
     <modules>
+        <module>common</module>
     </modules>
 
     <properties>
