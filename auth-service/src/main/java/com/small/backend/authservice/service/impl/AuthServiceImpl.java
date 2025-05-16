@@ -9,6 +9,7 @@ import com.small.backend.authservice.service.AuthService;
 import com.small.backend.authservice.security.JwtUtil;
 import exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -45,7 +46,7 @@ public class AuthServiceImpl implements AuthService {
         // JwtAuthenticationFilter handles subsequent requests regarding JWT validation.
 
         UserCredential user = repository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + request.getEmail()));
+                .orElseThrow(() -> new ResourceNotFoundException("User email " + request.getEmail() + " not found."));
 
         String accessToken = jwtUtil.generateAccessToken(user.getEmail());
         String refreshToken = jwtUtil.generateRefreshToken(user.getEmail());
@@ -59,7 +60,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void logout(String refreshToken) {
         UserCredential user = repository.findByRefreshToken(refreshToken)
-                .orElseThrow(() -> new ResourceNotFoundException("Invalid refresh token"));
+                .orElseThrow(() -> new AccessDeniedException("Invalid or expired refresh token"));
         user.setRefreshToken(null);
         repository.save(user);
     }
@@ -76,9 +77,14 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void updatePassword(String email, String newPassword) {
+    public void updatePassword(String email, String newPassword, String refreshToken) {
         UserCredential user = repository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("User email " + email + " not found."));
+
+        if (!refreshToken.equals(user.getRefreshToken())) {
+            throw new AccessDeniedException("Invalid refresh token.");
+        }
+
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         repository.save(user);
     }
@@ -86,16 +92,16 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public RefreshTokenResponse refreshToken(String refreshToken) {
         if (!jwtUtil.validateToken(refreshToken)) {
-            throw new IllegalArgumentException("Invalid refresh token");
+            throw new AccessDeniedException("Invalid refresh token.");
         }
 
         String email = jwtUtil.extractEmail(refreshToken);
 
         UserCredential user = repository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("User email " + email + " not found."));
 
         if (!refreshToken.equals(user.getRefreshToken())) {
-            throw new IllegalArgumentException("Refresh token does not match stored token");
+            throw new AccessDeniedException("Invalid refresh token.");
         }
 
         String newAccessToken = jwtUtil.generateAccessToken(email);

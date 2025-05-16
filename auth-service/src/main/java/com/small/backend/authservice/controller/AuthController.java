@@ -26,7 +26,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody @Valid RegisterRequest request) {
         authService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
+        return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully.");
     }
 
     @PostMapping("/login")
@@ -34,22 +34,31 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
-    @PostMapping("/refresh-token")
-    public ResponseEntity<RefreshTokenResponse> refreshToken(@RequestBody RefreshTokenRequest request) {
-        return ResponseEntity.ok(authService.refreshToken(request.getRefreshToken()));
-    }
+    // Tokens are stored on the client side (memory or Cookie),
+    // and the frontend retrieves them and properly provide them to the backend.
 
-    @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestBody RefreshTokenRequest request) {
-        authService.logout(request.getRefreshToken());
-        return ResponseEntity.ok("Logout successful.");
-    }
-
+    // A valid access token is required in the Authorization: Bearer <token> header.
+    // A valid refresh token is required in the request body (see class UpdatePasswordRequest for the reason).
     @PutMapping("/password")
     public ResponseEntity<String> updatePassword(@RequestBody @Valid UpdatePasswordRequest request,
                                                  Authentication auth) {
         String email = auth.getName();
-        authService.updatePassword(email, request.getNewPassword());
+        authService.updatePassword(email, request.getNewPassword(), request.getRefreshToken());
         return ResponseEntity.ok("Password updated successfully.");
+    }
+
+    // The access token may have expired, which is the very reason the client is calling /refresh.
+    // Hence, the refresh token needs to be presented in the request body.
+    @PostMapping("/refresh")
+    public ResponseEntity<RefreshTokenResponse> refreshToken(@RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refreshToken(request.getRefreshToken()));
+    }
+
+    // The logout operation invalidates the refresh token,
+    // so this token needs to be presented in the request body.
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestBody RefreshTokenRequest request) {
+        authService.logout(request.getRefreshToken());
+        return ResponseEntity.ok("Logout successful.");
     }
 }
