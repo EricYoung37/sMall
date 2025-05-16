@@ -81,8 +81,8 @@ public class AuthServiceImpl implements AuthService {
         UserCredential user = repository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User email " + email + " not found."));
 
-        if (!refreshToken.equals(user.getRefreshToken())) {
-            throw new AccessDeniedException("Invalid refresh token.");
+        if (!jwtUtil.validateToken(refreshToken) || !refreshToken.equals(user.getRefreshToken())) {
+            throw new AccessDeniedException("Invalid or expired refresh token.");
         }
 
         user.setPasswordHash(passwordEncoder.encode(newPassword));
@@ -91,17 +91,13 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public RefreshTokenResponse refreshToken(String refreshToken) {
-        if (!jwtUtil.validateToken(refreshToken)) {
-            throw new AccessDeniedException("Invalid refresh token.");
-        }
-
         String email = jwtUtil.extractEmail(refreshToken);
 
         UserCredential user = repository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User email " + email + " not found."));
 
-        if (!refreshToken.equals(user.getRefreshToken())) {
-            throw new AccessDeniedException("Invalid refresh token.");
+        if (!jwtUtil.validateToken(refreshToken) || !refreshToken.equals(user.getRefreshToken())) {
+            throw new AccessDeniedException("Invalid or expired refresh token.");
         }
 
         String newAccessToken = jwtUtil.generateAccessToken(email);
