@@ -1,6 +1,6 @@
 package com.small.backend.accountservice.service;
 
-import com.small.backend.accountservice.dto.CreateAccountRequest;
+import dto.CreateAccountRequest;
 import com.small.backend.accountservice.dto.UpdateAccountRequest;
 import com.small.backend.accountservice.entity.UserAccount;
 

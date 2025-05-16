@@ -1,6 +1,6 @@
 package com.small.backend.accountservice.dto;
 
-import com.small.backend.accountservice.entity.PaymentMethod;
+import entity.PaymentMethod;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
