@@ -5,15 +5,14 @@
     <parent>
         <groupId>com.sMall</groupId>
         <artifactId>sMall</artifactId>
-        <version>0.0.1-SNAPSHOT</version> <!--specifying the parent version is required-->
-        <relativePath>../pom.xml</relativePath> <!--explicitly specify the path to parent-->
-        <!--otherwise, Maven uses <relativePath>../sMall/pom.xml</relativePath>-->
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <groupId>com.sMall.backend</groupId>
-    <artifactId>account-service</artifactId>
-    <name>account-service</name>
-    <description>account-service</description>
+    <artifactId>auth-service</artifactId>
+    <name>auth-service</name>
+    <description>auth-service</description>
     <url/>
 
     <licenses>
@@ -31,7 +30,6 @@
         <url/>
     </scm>
 
-    <!--JDK version defined in the root pom.xml-->
     <properties>
     </properties>
 
@@ -45,6 +43,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
         <dependency>
@@ -63,8 +66,21 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-crypto</artifactId>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.11.5</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.11.5</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.11.5</version>
+            <scope>runtime</scope>
         </dependency>
 
         <dependency>
