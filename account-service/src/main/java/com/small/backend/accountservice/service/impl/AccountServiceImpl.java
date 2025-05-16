@@ -6,7 +6,7 @@ import com.small.backend.accountservice.dto.UpdateAccountRequest;
 import com.small.backend.accountservice.entity.UserAccount;
 import com.small.backend.accountservice.service.AccountService;
 import exception.ResourceNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -15,11 +15,10 @@ import java.util.UUID;
 public class AccountServiceImpl implements AccountService {
 
     private final UserAccountRepository repository;
-    private final BCryptPasswordEncoder passwordEncoder;
 
+    @Autowired
     public AccountServiceImpl(UserAccountRepository repository) {
         this.repository = repository;
-        this.passwordEncoder = new BCryptPasswordEncoder();
     }
 
     @Override
@@ -27,7 +26,6 @@ public class AccountServiceImpl implements AccountService {
         UserAccount user = new UserAccount();
         user.setEmail(request.getEmail());
         user.setUsername(request.getUsername());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setShippingAddress(request.getShippingAddress());
         user.setBillingAddress(request.getBillingAddress());
         user.setPaymentMethod(request.getPaymentMethod());

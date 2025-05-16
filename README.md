@@ -17,8 +17,6 @@ graph TD
     OrderService --> CassandraOrders[(Cassandra - Orders)]
     PaymentService --> MySQL_Payments[(MySQL - Payments)]
     
-    AuthService -- Credentials Synced via REST --> AccountService
-    
     AccountService --> Eureka["Service Discovery (Eureka)"]
     AuthService --> Eureka
     OrderService --> Eureka

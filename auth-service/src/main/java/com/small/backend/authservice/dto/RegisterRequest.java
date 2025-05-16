@@ -2,6 +2,7 @@ package com.small.backend.authservice.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 public class RegisterRequest {
 
@@ -10,6 +11,7 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank
+    @Size(min = 12)
     private String password;
 
     public String getEmail() {
