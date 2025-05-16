@@ -1,7 +1,7 @@
 package com.small.backend.accountservice.service.impl;
 
 import com.small.backend.accountservice.dao.UserAccountRepository;
-import com.small.backend.accountservice.dto.CreateAccountRequest;
+import dto.CreateAccountRequest;
 import com.small.backend.accountservice.dto.UpdateAccountRequest;
 import com.small.backend.accountservice.entity.UserAccount;
 import com.small.backend.accountservice.service.AccountService;

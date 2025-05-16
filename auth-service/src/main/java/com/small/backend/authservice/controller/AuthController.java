@@ -1,14 +1,19 @@
 package com.small.backend.authservice.controller;
 
 import com.small.backend.authservice.dto.*;
+import com.small.backend.authservice.entity.UserCredential;
 import com.small.backend.authservice.service.AuthService;
 import com.small.backend.authservice.security.JwtUtil;
+import dto.CreateAccountRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -16,16 +21,34 @@ public class AuthController {
 
     private final AuthService authService;
     private final JwtUtil jwtUtil;
+    private final RestTemplate restTemplate;
 
     @Autowired
-    public AuthController(AuthService authService, JwtUtil jwtUtil) {
+    public AuthController(AuthService authService, JwtUtil jwtUtil, RestTemplate restTemplate) {
         this.authService = authService;
         this.jwtUtil = jwtUtil;
+        this.restTemplate = restTemplate;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody @Valid RegisterRequest request) {
-        authService.register(request);
+    public ResponseEntity<String> register(@RequestBody @Valid CreateAccountRequest request) {
+        // 1. Create user credential
+        UserCredential savedUser = authService.register(request)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR, "Failed to register user credentials."));
+
+        // 2. Create user account in account-service
+        try {
+            restTemplate.postForEntity("http://localhost:8081/api/v1/accounts", request, Void.class);
+        } catch (RestClientException e) {
+            // Compensate: delete the created user credential to keep data consistent
+            if (savedUser != null) {
+                authService.deleteCredential(savedUser.getEmail());
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to create user account. Registration rolled back.");
+        }
+
         return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully.");
     }
 

@@ -3,10 +3,10 @@ package com.small.backend.authservice.service.impl;
 import com.small.backend.authservice.dao.UserCredentialRepository;
 import com.small.backend.authservice.dto.LoginRequest;
 import com.small.backend.authservice.dto.RefreshTokenResponse;
-import com.small.backend.authservice.dto.RegisterRequest;
 import com.small.backend.authservice.entity.UserCredential;
 import com.small.backend.authservice.service.AuthService;
 import com.small.backend.authservice.security.JwtUtil;
+import dto.CreateAccountRequest;
 import exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
@@ -14,6 +14,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -66,14 +68,22 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void register(RegisterRequest request) {
-        if (repository.existsByEmail(request.getEmail())) {
+    public Optional<UserCredential> register(CreateAccountRequest request) {
+        try {if (repository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("Email already registered");
         }
-        UserCredential user = new UserCredential();
-        user.setEmail(request.getEmail());
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        repository.save(user);
+            UserCredential user = new UserCredential();
+            user.setEmail(request.getEmail());
+            user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+            return Optional.of(repository.save(user));
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void deleteCredential(String email) {
+        repository.findByEmail(email).ifPresent(repository::delete);
     }
 
     @Override

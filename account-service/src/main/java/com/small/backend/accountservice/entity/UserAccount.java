@@ -1,5 +1,6 @@
 package com.small.backend.accountservice.entity;
 
+import entity.PaymentMethod;
 import jakarta.persistence.*;
 
 import java.util.UUID;
