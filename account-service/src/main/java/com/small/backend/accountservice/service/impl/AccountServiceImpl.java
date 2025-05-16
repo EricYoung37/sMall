@@ -35,22 +35,20 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public UserAccount updateAccount(UUID id, UpdateAccountRequest request) {
-        UserAccount existing = repository.findById(id).orElseThrow(
-                () -> new ResourceNotFoundException("User with ID " + id + " not found")
-        );
-        existing.setUsername(request.getUsername());
-        existing.setShippingAddress(request.getShippingAddress());
-        existing.setBillingAddress(request.getBillingAddress());
-        existing.setPaymentMethod(request.getPaymentMethod());
-        return repository.save(existing);
-    }
-
-    @Override
     public UserAccount getAccountById(UUID id) {
         return repository.findById(id).orElseThrow(
                 () -> new ResourceNotFoundException("User with ID " + id + " not found")
         );
+    }
+
+    @Override
+    public UserAccount updateAccount(UUID id, UpdateAccountRequest request) {
+        UserAccount user = getAccountById(id);
+        user.setUsername(request.getUsername());
+        user.setShippingAddress(request.getShippingAddress());
+        user.setBillingAddress(request.getBillingAddress());
+        user.setPaymentMethod(request.getPaymentMethod());
+        return repository.save(user);
     }
 
     @Override

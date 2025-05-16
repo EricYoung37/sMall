@@ -13,8 +13,11 @@ graph TD
     APIGateway --> PaymentService[Payment Service]
     
     AccountService --> MySQL_Accounts[(MySQL - User Accounts)]
+    AuthService --> MySQL_Credentials[(MySQL - User Credentials)]
     OrderService --> CassandraOrders[(Cassandra - Orders)]
     PaymentService --> MySQL_Payments[(MySQL - Payments)]
+    
+    AuthService -- Credentials Synced via REST --> AccountService
     
     AccountService --> Eureka["Service Discovery (Eureka)"]
     AuthService --> Eureka
@@ -39,5 +42,5 @@ graph TD
     class AuthService,AccountService,OrderService,PaymentService services;
     class Eureka serviceDiscovery;
     class Kafka kafka;
-    class MySQL_Accounts,CassandraOrders,MySQL_Payments databases;
+    class MySQL_Accounts,MySQL_Credentials,CassandraOrders,MySQL_Payments databases;
 ```
