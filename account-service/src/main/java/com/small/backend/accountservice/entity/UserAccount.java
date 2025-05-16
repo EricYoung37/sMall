@@ -18,9 +18,6 @@ public class UserAccount {
     @Column(nullable = false)
     private String username;
 
-    @Column(nullable = false)
-    private String password;
-
     @Column(length = 500)
     private String shippingAddress;
 
@@ -53,14 +50,6 @@ public class UserAccount {
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public String getShippingAddress() {
