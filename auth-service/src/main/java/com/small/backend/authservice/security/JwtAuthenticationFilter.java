@@ -19,7 +19,6 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-
     private final UserDetailsService userDetailsService;
 
     @Autowired
@@ -33,9 +32,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         final String authHeader = request.getHeader("Authorization");
+        final String BEARER_PREFIX = "Bearer ";  // Header prefix
+        final int BEARER_PREFIX_LENGTH = BEARER_PREFIX.length();  // Calculate its length
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            final String jwt = authHeader.substring(7);
+        if (authHeader != null && authHeader.startsWith(BEARER_PREFIX)) {
+            final String jwt = authHeader.substring(BEARER_PREFIX_LENGTH);
             final String email = jwtUtil.extractEmail(jwt);
 
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
