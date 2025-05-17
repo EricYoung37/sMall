@@ -6,7 +6,7 @@ import com.small.backend.authservice.dto.RefreshTokenResponse;
 import com.small.backend.authservice.entity.UserCredential;
 import com.small.backend.authservice.service.AuthService;
 import com.small.backend.authservice.security.JwtUtil;
-import dto.CreateAccountRequest;
+import com.small.backend.authservice.dto.RegistrationRequest;
 import exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
@@ -68,7 +68,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Optional<UserCredential> register(CreateAccountRequest request) {
+    public Optional<UserCredential> register(LoginRequest request) {
         try {if (repository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("Email already registered");
         }
