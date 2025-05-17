@@ -2,7 +2,6 @@ package com.small.backend.authservice.config;
 
 import com.small.backend.authservice.security.JwtAuthenticationEntryPoint;
 import com.small.backend.authservice.security.JwtAuthenticationFilter;
-import com.small.backend.authservice.security.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

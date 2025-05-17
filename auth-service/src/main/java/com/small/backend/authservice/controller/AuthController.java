@@ -48,6 +48,10 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to create user account. Registration rolled back.");
         }
+        // We may do this creation sequence within a transaction, but that's expensive.
+
+        // We may also try creating an account before the credential and delete the account if credential creation fails.
+        // However, this may result in an account without a credential.
 
         return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully.");
     }
