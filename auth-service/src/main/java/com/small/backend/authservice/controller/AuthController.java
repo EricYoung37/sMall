@@ -4,9 +4,14 @@ import com.small.backend.authservice.dto.*;
 import com.small.backend.authservice.entity.UserCredential;
 import com.small.backend.authservice.service.AuthService;
 import com.small.backend.authservice.security.JwtUtil;
+import com.small.backend.authservice.dto.RegistrationRequest;
 import dto.CreateAccountRequest;
 import jakarta.validation.Valid;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -20,26 +25,38 @@ import org.springframework.web.server.ResponseStatusException;
 public class AuthController {
 
     private final AuthService authService;
-    private final JwtUtil jwtUtil;
     private final RestTemplate restTemplate;
+    private final ModelMapper modelMapper;
 
     @Autowired
-    public AuthController(AuthService authService, JwtUtil jwtUtil, RestTemplate restTemplate) {
+    public AuthController(AuthService authService, RestTemplate restTemplate, ModelMapper modelMapper) {
         this.authService = authService;
-        this.jwtUtil = jwtUtil;
         this.restTemplate = restTemplate;
+        this.modelMapper = modelMapper;
     }
 
+    @Value("${internal.api.token}")
+    private String internalToken;
+
+    @Value("${internal.auth.header}")
+    private String internalAuthHeader;
+
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody @Valid CreateAccountRequest request) {
+    public ResponseEntity<String> register(@RequestBody @Valid RegistrationRequest request) {
         // 1. Create user credential
-        UserCredential savedUser = authService.register(request)
+        UserCredential savedUser = authService.register(modelMapper.map(request, LoginRequest.class))
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.INTERNAL_SERVER_ERROR, "Failed to register user credentials."));
 
         // 2. Create user account in account-service
         try {
-            restTemplate.postForEntity("http://localhost:8081/api/v1/accounts", request, Void.class);
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(internalAuthHeader, internalToken);
+            HttpEntity<CreateAccountRequest> entity = new HttpEntity<>(
+                    modelMapper.map(request, CreateAccountRequest.class),
+                    headers);
+
+            restTemplate.postForEntity("http://localhost:8081/api/v1/accounts", entity, Void.class);
         } catch (RestClientException e) {
             // Compensate: delete the created user credential to keep data consistent
             if (savedUser != null) {

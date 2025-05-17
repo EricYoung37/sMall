@@ -1,22 +1,26 @@
-package com.small.backend.authservice.config;
+package com.small.backend.accountservice.config;
 
-import com.small.backend.authservice.security.JwtAuthenticationEntryPoint;
-import com.small.backend.authservice.security.JwtAuthenticationFilter;
+import com.small.backend.accountservice.security.JwtAuthenticationEntryPoint;
+import com.small.backend.accountservice.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 public class SecurityConfig {
-
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
@@ -27,34 +31,33 @@ public class SecurityConfig {
         this.authenticationEntryPoint = authenticationEntryPoint;
     }
 
+    @Value("${internal.api.token}")
+    private String internalToken;
+
+    @Value("${internal.auth.header}")
+    private String internalAuthHeader;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        // HttpSecurity http configures security rules (builder/configurer)
         http
                 .csrf(csrf -> csrf.disable())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint))
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/v1/auth/login",
-                                "/api/v1/auth/register",
-                                "/api/v1/auth/refresh",
-                                "/api/v1/auth/logout").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/accounts").access(internalCallAuthorizationManager())
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); // filter registration and ordering
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        // Builds the configuration into the filter chain and returns it for Spring Boot to apply to incoming HTTP requests.
         return http.build();
     }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    private AuthorizationManager<RequestAuthorizationContext> internalCallAuthorizationManager() {
+        return (authenticationSupplier, context) -> {
+            HttpServletRequest request = context.getRequest();
+            String internalHeader = request.getHeader(internalAuthHeader);
+            boolean isGranted = internalToken.equals(internalHeader);
+            return new AuthorizationDecision(isGranted);
+        };
     }
 }

@@ -1,6 +1,7 @@
 package com.small.backend.accountservice.controller;
 
 import dto.CreateAccountRequest;
+import dto.RegistrationRequest;
 import com.small.backend.accountservice.dto.UpdateAccountRequest;
 import com.small.backend.accountservice.entity.UserAccount;
 import com.small.backend.accountservice.service.AccountService;
