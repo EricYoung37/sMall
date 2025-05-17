@@ -3,6 +3,7 @@ package com.small.backend.authservice.security;
 import com.small.backend.authservice.dao.UserCredentialRepository;
 import com.small.backend.authservice.entity.UserCredential;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -23,10 +24,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         UserCredential user = repository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
-        return org.springframework.security.core.userdetails.User.builder()
+        return User.builder()
                 .username(user.getEmail())
                 .password(user.getPasswordHash())
-                .roles("USER")
+                .roles("USER") // returned by getAuthorities()
                 .build();
     }
 }
