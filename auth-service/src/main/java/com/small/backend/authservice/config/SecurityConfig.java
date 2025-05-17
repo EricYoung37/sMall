@@ -29,6 +29,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // HttpSecurity http configures security rules (builder/configurer)
         http
                 .csrf(csrf -> csrf.disable())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint))
@@ -41,8 +42,9 @@ public class SecurityConfig {
                                 "/api/v1/auth/logout").permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); // filter registration and ordering
 
+        // Builds the configuration into the filter chain and returns it for Spring Boot to apply to incoming HTTP requests.
         return http.build();
     }
 
