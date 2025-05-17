@@ -3,7 +3,6 @@ package com.small.backend.authservice.controller;
 import com.small.backend.authservice.dto.*;
 import com.small.backend.authservice.entity.UserCredential;
 import com.small.backend.authservice.service.AuthService;
-import com.small.backend.authservice.security.JwtUtil;
 import com.small.backend.authservice.dto.RegistrationRequest;
 import dto.CreateAccountRequest;
 import jakarta.validation.Valid;
