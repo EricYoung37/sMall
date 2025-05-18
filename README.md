@@ -17,11 +17,16 @@ graph TD
     OrderService --> CassandraOrders[(Cassandra - Orders)]
     PaymentService --> MySQL_Payments[(MySQL - Payments)]
     
-    AccountService --> Eureka["Service Discovery (Eureka)"]
-    AuthService --> Eureka
-    OrderService --> Eureka
-    PaymentService --> Eureka
-    APIGateway --> Eureka
+    AccountService .-> Eureka["Service Discovery (Eureka)"]
+    AuthService .-> Eureka
+    OrderService .-> Eureka
+    PaymentService .-> Eureka
+    APIGateway .-> Eureka
+
+    AccountService --> Redis["User JWT (Redis)"]
+    AuthService --> Redis
+    OrderService --> Redis
+    PaymentService --> Redis
     
     OrderService --> Kafka[Kafka Topic: order.placed]
     PaymentService --> Kafka
@@ -32,6 +37,7 @@ graph TD
     classDef services fill:#90caf9,stroke:#1e88e5;
     classDef serviceDiscovery fill:#a5d6a7,stroke:#388e3c;
     classDef kafka fill:#ff7043,stroke:#bf360c;
+    classDef redis fill:#ef9a9a,stroke:#c62828;
     classDef databases fill:#ffe082,stroke:#fbc02d;
     
     %% Apply styles
@@ -40,5 +46,6 @@ graph TD
     class AuthService,AccountService,OrderService,PaymentService services;
     class Eureka serviceDiscovery;
     class Kafka kafka;
+    class Redis redis;
     class MySQL_Accounts,MySQL_Credentials,CassandraOrders,MySQL_Payments databases;
 ```

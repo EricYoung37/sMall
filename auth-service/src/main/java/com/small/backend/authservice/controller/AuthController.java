@@ -2,6 +2,7 @@ package com.small.backend.authservice.controller;
 
 import com.small.backend.authservice.dto.*;
 import com.small.backend.authservice.entity.UserCredential;
+import com.small.backend.authservice.security.JwtUtil;
 import com.small.backend.authservice.service.AuthService;
 import com.small.backend.authservice.dto.RegistrationRequest;
 import dto.CreateAccountRequest;
@@ -27,18 +28,25 @@ public class AuthController {
     private final AuthService authService;
     private final RestTemplate restTemplate;
     private final ModelMapper modelMapper;
+    private final JwtUtil jwtUtil;
 
     private final String internalToken;
     private final String internalAuthHeader;
 
+    private final String AUTHORIZATION_HEADER = AppConstants.AUTHORIZATION_HEADER;
+    private final String BEARER_PREFIX = AppConstants.BEARER_PREFIX;
+
+    @Autowired
     public AuthController(AuthService authService,
                           RestTemplate restTemplate,
                           ModelMapper modelMapper,
+                          JwtUtil jwtUtil,
                           @Value("${internal.auth.token}") String internalToken,
                           @Value("${internal.auth.header}") String internalAuthHeader) {
         this.authService = authService;
         this.restTemplate = restTemplate;
         this.modelMapper = modelMapper;
+        this.jwtUtil = jwtUtil;
         this.internalToken = internalToken;
         this.internalAuthHeader = internalAuthHeader;
     }
@@ -76,35 +84,59 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<RefreshTokenResponse> login(@RequestBody @Valid LoginRequest request) {
+    public ResponseEntity<String> login(@RequestBody @Valid LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 
-    // Tokens are stored on the client side (memory or Cookie),
-    // The frontend retrieves them and provide them to the backend.
-
-    // The access token is handled by the JwtAuthenticationFilter.
-    // The refresh token is parsed here.
     @PutMapping("/password")
-    public ResponseEntity<String> updatePassword(@RequestHeader(AppConstants.REFRESH_TOKEN_HEADER) @Valid String refreshToken,
+    public ResponseEntity<String> updatePassword(@RequestHeader(AUTHORIZATION_HEADER) String authHeader,
                                                  @RequestBody @Valid UpdatePasswordRequest request,
                                                  Authentication auth) {
-        String email = auth.getName();
-        authService.updatePassword(email, request.getNewPassword(), refreshToken);
+        // No need to check header nullness or prefix because they've been checked by the JWT auth filter.
+        String token = authHeader.substring(BEARER_PREFIX.length());
+        String currentEmail = auth.getName();
+
+        // A user can only update their own password.
+        if (!jwtUtil.validateToken(token) || !currentEmail.equals(jwtUtil.extractEmail(token))) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("Access Denied.");
+        }
+
+        authService.updatePassword(token, currentEmail, request.getNewPassword());
         return ResponseEntity.ok("Password updated successfully.");
     }
 
-    // The access token may have expired, which is the very reason the client is calling /refresh.
-    // Hence, the client must provide the refresh token.
+    // After the refresh request, the token on the client side must be updated as well (client responsibility).
     @PostMapping("/refresh")
-    public ResponseEntity<RefreshTokenResponse> refreshToken(@RequestHeader(AppConstants.REFRESH_TOKEN_HEADER) @Valid String refreshToken) {
-        return ResponseEntity.ok(authService.refreshToken(refreshToken));
+    public ResponseEntity<String> refreshToken(@RequestHeader(AUTHORIZATION_HEADER) String authHeader,
+                                               Authentication auth) {
+        String token = authHeader.substring(BEARER_PREFIX.length());
+        String currentEmail = auth.getName();
+        
+        if (!jwtUtil.validateToken(token) || !currentEmail.equals(jwtUtil.extractEmail(token))) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("Access Denied.");
+        }
+        
+        return ResponseEntity.ok(authService.refreshToken(token));
     }
 
-    // The logout operation invalidates the refresh token.
+    // The logout operation invalidates the token.
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestHeader(AppConstants.REFRESH_TOKEN_HEADER) @Valid String refreshToken) {
-        authService.logout(refreshToken);
+    public ResponseEntity<String> logout(@RequestHeader(AUTHORIZATION_HEADER) String authHeader,
+                                         Authentication auth) {
+        String token = authHeader.substring(BEARER_PREFIX.length());
+        String currentEmail = auth.getName();
+
+        if (!jwtUtil.validateToken(token) || !currentEmail.equals(jwtUtil.extractEmail(token))) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("Access Denied.");
+        }
+
+        authService.logout(token);
         return ResponseEntity.ok("Logout successful.");
     }
 }

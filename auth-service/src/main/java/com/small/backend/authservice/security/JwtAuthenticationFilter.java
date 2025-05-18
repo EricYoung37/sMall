@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import util.AppConstants;
 
 import java.io.IOException;
 
@@ -35,12 +36,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Recall addFilterBefore() in SecurityFilterChain.
 
         // For the access token.
-        final String authHeader = request.getHeader("Authorization");
-        final String BEARER_PREFIX = "Bearer ";  // Header prefix
-        final int BEARER_PREFIX_LENGTH = BEARER_PREFIX.length();  // Calculate its length
+        final String authHeader = request.getHeader(AppConstants.AUTHORIZATION_HEADER);
 
-        if (authHeader != null && authHeader.startsWith(BEARER_PREFIX)) {
-            final String jwt = authHeader.substring(BEARER_PREFIX_LENGTH);
+        if (authHeader != null && authHeader.startsWith(AppConstants.BEARER_PREFIX)) {
+            final String jwt = authHeader.substring(AppConstants.BEARER_PREFIX.length());
             final String email = jwtUtil.extractEmail(jwt);
 
             // Each HTTP request creates its own Authentication object per user across multiple requests.
