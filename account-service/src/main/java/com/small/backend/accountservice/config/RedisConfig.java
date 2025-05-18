@@ -1,4 +1,4 @@
-package com.small.backend.authservice.config;
+package com.small.backend.accountservice.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
