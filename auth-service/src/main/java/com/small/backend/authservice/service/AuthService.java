@@ -9,7 +9,6 @@ public interface AuthService {
     Optional<UserCredential> register(LoginRequest request);
     String login(LoginRequest request);
     void updatePassword(String token, String email, String newPassword);
-    String refreshToken(String oldToken);
     void logout(String token);
 
     void deleteCredential(String email); // Roll back if account-service fails to create an account.
