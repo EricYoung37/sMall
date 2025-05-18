@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
+import util.AppConstants;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -27,18 +28,20 @@ public class AuthController {
     private final RestTemplate restTemplate;
     private final ModelMapper modelMapper;
 
-    @Autowired
-    public AuthController(AuthService authService, RestTemplate restTemplate, ModelMapper modelMapper) {
+    private final String internalToken;
+    private final String internalAuthHeader;
+
+    public AuthController(AuthService authService,
+                          RestTemplate restTemplate,
+                          ModelMapper modelMapper,
+                          @Value("${internal.auth.token}") String internalToken,
+                          @Value("${internal.auth.header}") String internalAuthHeader) {
         this.authService = authService;
         this.restTemplate = restTemplate;
         this.modelMapper = modelMapper;
+        this.internalToken = internalToken;
+        this.internalAuthHeader = internalAuthHeader;
     }
-
-    @Value("${internal.api.token}")
-    private String internalToken;
-
-    @Value("${internal.auth.header}")
-    private String internalAuthHeader;
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody @Valid RegistrationRequest request) {
@@ -78,30 +81,30 @@ public class AuthController {
     }
 
     // Tokens are stored on the client side (memory or Cookie),
-    // and the frontend retrieves them and properly provide them to the backend.
+    // The frontend retrieves them and provide them to the backend.
 
-    // A valid access token is required in the Authorization: Bearer <token> header.
-    // A valid refresh token is required in the request body (see class UpdatePasswordRequest for the reason).
+    // The access token is handled by the JwtAuthenticationFilter.
+    // The refresh token is parsed here.
     @PutMapping("/password")
-    public ResponseEntity<String> updatePassword(@RequestBody @Valid UpdatePasswordRequest request,
+    public ResponseEntity<String> updatePassword(@RequestHeader(AppConstants.REFRESH_TOKEN_HEADER) @Valid String refreshToken,
+                                                 @RequestBody @Valid UpdatePasswordRequest request,
                                                  Authentication auth) {
         String email = auth.getName();
-        authService.updatePassword(email, request.getNewPassword(), request.getRefreshToken());
+        authService.updatePassword(email, request.getNewPassword(), refreshToken);
         return ResponseEntity.ok("Password updated successfully.");
     }
 
     // The access token may have expired, which is the very reason the client is calling /refresh.
-    // Hence, the refresh token needs to be presented in the request body.
+    // Hence, the client must provide the refresh token.
     @PostMapping("/refresh")
-    public ResponseEntity<RefreshTokenResponse> refreshToken(@RequestBody RefreshTokenRequest request) {
-        return ResponseEntity.ok(authService.refreshToken(request.getRefreshToken()));
+    public ResponseEntity<RefreshTokenResponse> refreshToken(@RequestHeader(AppConstants.REFRESH_TOKEN_HEADER) @Valid String refreshToken) {
+        return ResponseEntity.ok(authService.refreshToken(refreshToken));
     }
 
-    // The logout operation invalidates the refresh token,
-    // so this token needs to be presented in the request body.
+    // The logout operation invalidates the refresh token.
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestBody RefreshTokenRequest request) {
-        authService.logout(request.getRefreshToken());
+    public ResponseEntity<String> logout(@RequestHeader(AppConstants.REFRESH_TOKEN_HEADER) @Valid String refreshToken) {
+        authService.logout(refreshToken);
         return ResponseEntity.ok("Logout successful.");
     }
 }

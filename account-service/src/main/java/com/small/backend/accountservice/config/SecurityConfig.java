@@ -15,21 +15,22 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import security.JwtAuthenticationEntryPoint;
+import util.AppConstants;
 
 @Configuration
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final String internalToken;
+    private final String internalAuthHeader;
 
     @Autowired
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          @Value("${internal.auth.token}") String internalToken,
+                          @Value("${internal.auth.header}") String internalAuthHeader) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.internalToken = internalToken;
+        this.internalAuthHeader = internalAuthHeader;
     }
-
-    @Value("${internal.api.token}")
-    private String internalToken;
-
-    @Value("${internal.auth.header}")
-    private String internalAuthHeader;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
