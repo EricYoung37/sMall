@@ -112,9 +112,8 @@ public class AuthController {
     public ResponseEntity<String> refreshToken(@RequestHeader(AUTHORIZATION_HEADER) String authHeader,
                                                Authentication auth) {
         String token = authHeader.substring(BEARER_PREFIX.length());
-        String currentEmail = auth.getName();
         
-        if (!jwtUtil.validateToken(token) || !currentEmail.equals(jwtUtil.extractEmail(token))) {
+        if (!jwtUtil.validateToken(token) || !auth.getName().equals(jwtUtil.extractEmail(token))) {
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN)
                     .body("Access Denied.");
@@ -128,9 +127,8 @@ public class AuthController {
     public ResponseEntity<String> logout(@RequestHeader(AUTHORIZATION_HEADER) String authHeader,
                                          Authentication auth) {
         String token = authHeader.substring(BEARER_PREFIX.length());
-        String currentEmail = auth.getName();
 
-        if (!jwtUtil.validateToken(token) || !currentEmail.equals(jwtUtil.extractEmail(token))) {
+        if (!jwtUtil.validateToken(token) || !auth.getName().equals(jwtUtil.extractEmail(token))) {
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN)
                     .body("Access Denied.");

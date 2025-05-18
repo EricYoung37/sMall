@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public interface AccountService {
     UserAccount createAccount(CreateAccountRequest request);
-    UserAccount updateAccount(UUID id, UpdateAccountRequest request);
-    UserAccount getAccountById(UUID id);
-    UserAccount getAccountByEmail(String email);
+    UserAccount getAccountByEmail(String token, String email);
+    UserAccount getAccountById(String token, UUID id);
+    UserAccount updateAccount(String token, UUID id, UpdateAccountRequest request);
 }

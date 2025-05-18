@@ -3,22 +3,18 @@ package com.small.backend.authservice.service.impl;
 import com.small.backend.authservice.dao.UserCredentialRepository;
 import com.small.backend.authservice.dto.LoginRequest;
 import com.small.backend.authservice.entity.UserCredential;
+import com.small.backend.authservice.security.RedisJtiService;
 import com.small.backend.authservice.service.AuthService;
 import com.small.backend.authservice.security.JwtUtil;
 import exception.ResourceNotFoundException;
-import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -27,19 +23,19 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authManager;
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisJtiService redisJtiService;
 
     @Autowired
     public AuthServiceImpl(UserCredentialRepository repository,
                            PasswordEncoder passwordEncoder,
                            JwtUtil jwtUtil,
                            AuthenticationManager authManager,
-                           @Qualifier("redisTemplate") RedisTemplate<String, String> redisTemplate) {
+                           RedisJtiService redisJtiService) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.authManager = authManager;
-        this.redisTemplate = redisTemplate;
+        this.redisJtiService = redisJtiService;
     }
 
     @Override
@@ -71,7 +67,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("User email " + request.getEmail() + " not found."));
 
         String token = jwtUtil.generateToken(user.getEmail());
-        storeJti(jwtUtil.extractJti(token), jwtUtil.extractExpiration(token)); // save token JTI to Redis
+        redisJtiService.storeJti(jwtUtil.extractJti(token), jwtUtil.extractExpiration(token)); // save token JTI to Redis
 
         repository.save(user);
 
@@ -85,7 +81,7 @@ public class AuthServiceImpl implements AuthService {
 
         // Only logged-in user can update the password.
         // Check if token JTI exists in Redis.
-        if(!isJtiValid(jwtUtil.extractJti(token))) {
+        if(!redisJtiService.isJtiValid(jwtUtil.extractJti(token))) {
             throw new AccessDeniedException("Invalid or expired access token.");
         }
 
@@ -98,12 +94,12 @@ public class AuthServiceImpl implements AuthService {
         String jti = jwtUtil.extractJti(oldToken);
 
         // Only logged-in user can refresh the token.
-        if(!isJtiValid(jti)) {
+        if(!redisJtiService.isJtiValid(jti)) {
             throw new AccessDeniedException("Invalid or expired access token.");
         }
-        revokeJti(jti); // Invalidate token JTI in Redis.
+        redisJtiService.revokeJti(jti); // Invalidate token JTI in Redis.
         String newToken = jwtUtil.generateToken(jwtUtil.extractEmail(oldToken));
-        storeJti(jwtUtil.extractJti(newToken), jwtUtil.extractExpiration(newToken));
+        redisJtiService.storeJti(jwtUtil.extractJti(newToken), jwtUtil.extractExpiration(newToken));
         return newToken;
     }
 
@@ -112,41 +108,15 @@ public class AuthServiceImpl implements AuthService {
         String jti = jwtUtil.extractJti(token);
 
         // Only logged-in user can log out.
-        if(!isJtiValid(jti)) {
+        if(!redisJtiService.isJtiValid(jti)) {
             throw new AccessDeniedException("Invalid or expired access token.");
         }
-        revokeJti(jti);
+        redisJtiService.revokeJti(jti);
     }
 
     // Roll back if account-service fails to create an account.
     @Override
     public void deleteCredential(String email) {
         repository.findByEmail(email).ifPresent(repository::delete);
-    }
-
-
-    // Redis is used to store tokens.
-
-    public void storeJti(String jti, Date expiration) {
-        long ttlMs = expiration.getTime() - System.currentTimeMillis();
-        try {
-            redisTemplate.opsForValue().set(jti, "valid", ttlMs, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            // ttlMs < 0
-            e.printStackTrace();
-        }
-    }
-
-    public boolean isJtiValid(String jti) {
-        try {
-            return redisTemplate.hasKey(jti);
-        } catch (JwtException e) {
-            // Signature invalid, malformed, expired, etc.
-            return false;
-        }
-    }
-
-    public void revokeJti(String jti) {
-        redisTemplate.delete(jti);
     }
 }
