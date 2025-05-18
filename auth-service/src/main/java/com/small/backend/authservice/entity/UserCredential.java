@@ -18,9 +18,6 @@ public class UserCredential {
     @Column(nullable = false)
     private String passwordHash;
 
-    @Column(length = 512)
-    private String refreshToken;
-
     public UUID getId() {
         return id;
     }
@@ -43,13 +40,5 @@ public class UserCredential {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
     }
 }

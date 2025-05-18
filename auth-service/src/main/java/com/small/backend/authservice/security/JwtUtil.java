@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import security.AbstractJwtUtilBase;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtUtil extends AbstractJwtUtilBase {
@@ -14,31 +15,21 @@ public class JwtUtil extends AbstractJwtUtilBase {
     @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.access.exp}")
-    private long accessExpMs;
-
-    @Value("${jwt.refresh.exp}")
-    private long refreshExpMs;
+    @Value("${jwt.exp.ms}")
+    private long jwtExpMs;
 
     @PostConstruct
     public void init() {
         initKey(secret);
     }
 
-    public String generateAccessToken(String email) {
+    public String generateToken(String email) {
+        String jti = UUID.randomUUID().toString();
         return Jwts.builder()
                 .setSubject(email)
+                .setId(jti)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + accessExpMs))
-                .signWith(key)
-                .compact();
-    }
-
-    public String generateRefreshToken(String email) {
-        return Jwts.builder()
-                .setSubject(email)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + refreshExpMs))
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpMs))
                 .signWith(key)
                 .compact();
     }

@@ -1,5 +1,6 @@
 package security;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -7,6 +8,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 
 import java.security.Key;
 import java.util.Base64;
+import java.util.Date;
 
 public class AbstractJwtUtilBase implements JwtUtilBase{
     protected Key key;
@@ -26,6 +28,26 @@ public class AbstractJwtUtilBase implements JwtUtilBase{
         } catch (JwtException e) {
             throw new BadCredentialsException("Invalid or expired JWT token");
         }
+    }
+
+    @Override
+    public String extractJti(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.getId();
+    }
+
+    @Override
+    public Date extractExpiration(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.getExpiration();
     }
 
     @Override
