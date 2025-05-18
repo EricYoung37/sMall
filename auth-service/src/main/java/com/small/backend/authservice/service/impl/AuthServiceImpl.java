@@ -90,20 +90,6 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String refreshToken(String oldToken) {
-        String jti = jwtUtil.extractJti(oldToken);
-
-        // Only logged-in user can refresh the token.
-        if(!redisJtiService.isJtiValid(jti)) {
-            throw new AccessDeniedException("Invalid or expired access token.");
-        }
-        redisJtiService.revokeJti(jti); // Invalidate token JTI in Redis.
-        String newToken = jwtUtil.generateToken(jwtUtil.extractEmail(oldToken));
-        redisJtiService.storeJti(jwtUtil.extractJti(newToken), jwtUtil.extractExpiration(newToken));
-        return newToken;
-    }
-
-    @Override
     public void logout(String token) {
         String jti = jwtUtil.extractJti(token);
 

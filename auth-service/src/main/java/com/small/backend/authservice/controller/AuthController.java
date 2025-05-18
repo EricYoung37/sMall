@@ -107,21 +107,6 @@ public class AuthController {
         return ResponseEntity.ok("Password updated successfully.");
     }
 
-    // After the refresh request, the token on the client side must be updated as well (client responsibility).
-    @PostMapping("/refresh")
-    public ResponseEntity<String> refreshToken(@RequestHeader(AUTHORIZATION_HEADER) String authHeader,
-                                               Authentication auth) {
-        String token = authHeader.substring(BEARER_PREFIX.length());
-        
-        if (!jwtUtil.validateToken(token) || !auth.getName().equals(jwtUtil.extractEmail(token))) {
-            return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN)
-                    .body("Access Denied.");
-        }
-        
-        return ResponseEntity.ok(authService.refreshToken(token));
-    }
-
     // The logout operation invalidates the token.
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@RequestHeader(AUTHORIZATION_HEADER) String authHeader,
