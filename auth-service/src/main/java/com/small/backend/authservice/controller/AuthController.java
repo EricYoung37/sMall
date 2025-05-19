@@ -36,6 +36,9 @@ public class AuthController {
     private final String AUTHORIZATION_HEADER = AppConstants.AUTHORIZATION_HEADER;
     private final String BEARER_PREFIX = AppConstants.BEARER_PREFIX;
 
+    @Value("${account.service.port}")
+    private String accountServicePort;
+
     @Autowired
     public AuthController(AuthService authService,
                           RestTemplate restTemplate,
@@ -66,7 +69,7 @@ public class AuthController {
                     modelMapper.map(request, CreateAccountRequest.class),
                     headers);
 
-            restTemplate.postForEntity("http://localhost:8081/api/v1/accounts", entity, Void.class);
+            restTemplate.postForEntity("http://localhost:"+accountServicePort+"/api/v1/accounts", entity, Void.class);
         } catch (RestClientException e) {
             // Compensate: delete the created user credential to keep data consistent
             if (savedUser != null) {
