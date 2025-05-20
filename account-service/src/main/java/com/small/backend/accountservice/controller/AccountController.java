@@ -1,6 +1,5 @@
 package com.small.backend.accountservice.controller;
 
-import com.small.backend.accountservice.security.JwtUtil;
 import dto.CreateAccountRequest;
 import com.small.backend.accountservice.dto.UpdateAccountRequest;
 import com.small.backend.accountservice.entity.UserAccount;
@@ -12,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import util.AppConstants;
 
 import java.util.UUID;
 
@@ -21,8 +19,6 @@ import java.util.UUID;
 public class AccountController {
 
     private final AccountService service;
-
-    private final String USER_EMAIL_HEADER = AppConstants.USER_EMAIL_HEADER;
 
     @Autowired
     public AccountController(AccountService service) {
