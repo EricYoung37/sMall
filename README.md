@@ -80,3 +80,24 @@ REDIS_PWD=
 JWT_EXP_MS=
 ```
 </details>
+
+
+## Run the App
+### IntelliJ IDEA
+Use IDEA's run button to run these.
+- [docker-compose.yml](docker-compose.yml)
+- [ApiGatewayApplication](api-gateway/src/main/java/com/small/backend/apigateway/ApiGatewayApplication.java)
+- [AccountServiceApplication](account-service/src/main/java/com/small/backend/accountservice/AccountServiceApplication.java)
+- [AuthServiceApplication](auth-service/src/main/java/com/small/backend/authservice/AuthServiceApplication.java)
+
+### Terminal
+The app can also be run from the terminal if IDEA is not available. **Windows users** need to use **Git Bash**.
+```shell
+# project's root directory
+$ docker compose up
+```
+
+```shell
+# in api-gateway/, account-service/, or auth-service/
+$ . run.sh
+```
