@@ -47,3 +47,36 @@ graph TD
     class Redis redis;
     class MySQL_Accounts,MySQL_Credentials,CassandraOrders,MySQL_Payments databases;
 ```
+
+## Environment Variables
+<details>
+<summary>./common/common.env</summary>
+
+```
+API_GATEWAY_PORT=
+AUTH_SERVICE_PORT=
+ACCOUNT_SERVICE_PORT=
+
+MYSQL_USER=
+MYSQL_PWD=
+MYSQL_PORT=
+MYSQL_DB=s_mall
+
+JWT_SECRET=must-be-a-Base64-encoded-secret
+
+INTERNAL_AUTH_TOKEN=
+INTERNAL_AUTH_HEADER=
+
+REDIS_HOST=
+REDIS_PORT=
+REDIS_PWD=
+```
+</details>
+
+<details>
+<summary>./auth-service/.env</summary>
+
+```
+JWT_EXP_MS=
+```
+</details>
