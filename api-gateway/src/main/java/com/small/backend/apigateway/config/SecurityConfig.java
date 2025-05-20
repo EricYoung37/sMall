@@ -15,6 +15,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/api/v1/**").permitAll()
+                        .anyExchange().denyAll() // deny non-api traffic
                 )
                 // other configurations
                 .build();
