@@ -1,4 +1,4 @@
-package com.small.backend.accountservice.config;
+package com.small.backend.apigateway.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
