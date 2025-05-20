@@ -15,11 +15,13 @@
         <module>common</module>
         <module>account-service</module>
         <module>auth-service</module>
+        <module>api-gateway</module>
     </modules>
 
     <properties>
         <jdk.version>17</jdk.version>
         <spring.boot.version>3.4.5</spring.boot.version>
+        <spring.cloud.version>2024.0.1</spring.cloud.version>
         <maven.compiler.source>${jdk.version}</maven.compiler.source>
         <maven.compiler.target>${jdk.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -37,6 +39,14 @@
                 <type>pom</type>
                 <!--only valid inside <dependencyManagement>-->
                 <!--import all the dependency version management information from that external POM (BOM)-->
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>2024.0.1</version>
+                <type>pom</type>
                 <scope>import</scope>
             </dependency>
         </dependencies>

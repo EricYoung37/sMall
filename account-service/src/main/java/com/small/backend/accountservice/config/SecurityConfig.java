@@ -1,6 +1,7 @@
 package com.small.backend.accountservice.config;
 
-import com.small.backend.accountservice.security.JwtAuthenticationFilter;
+import com.small.backend.accountservice.security.CustomAuthenticationEntryPoint;
+import com.small.backend.accountservice.security.GatewayHeaderAuthFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,42 +15,40 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import security.JwtAuthenticationEntryPoint;
-import util.AppConstants;
 
 @Configuration
 public class SecurityConfig {
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final String internalToken;
     private final String internalAuthHeader;
+    private GatewayHeaderAuthFilter gatewayHeaderAuthFilter;
 
     @Autowired
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
-                          @Value("${internal.auth.token}") String internalToken,
-                          @Value("${internal.auth.header}") String internalAuthHeader) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    public SecurityConfig(@Value("${internal.auth.token}") String internalToken,
+                          @Value("${internal.auth.header}") String internalAuthHeader,
+                          GatewayHeaderAuthFilter gatewayHeaderAuthFilter) {
         this.internalToken = internalToken;
         this.internalAuthHeader = internalAuthHeader;
+        this.gatewayHeaderAuthFilter = gatewayHeaderAuthFilter;
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint()))
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint()))
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/v1/accounts").access(internalCallAuthorizationManager())
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(gatewayHeaderAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
-    public JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint() {
-        return new JwtAuthenticationEntryPoint();
+    public CustomAuthenticationEntryPoint customAuthenticationEntryPoint() {
+        return new CustomAuthenticationEntryPoint();
     }
 
     private AuthorizationManager<RequestAuthorizationContext> internalCallAuthorizationManager() {
