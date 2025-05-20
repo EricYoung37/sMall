@@ -23,10 +23,8 @@ graph TD
     PaymentService .-> Eureka
     APIGateway .-> Eureka
 
-    AccountService --> Redis["User JWT (Redis)"]
-    AuthService --> Redis
-    OrderService --> Redis
-    PaymentService --> Redis
+    AuthService <==> Redis["User JWT (Redis)"]
+    APIGateway <==> Redis
     
     OrderService --> Kafka[Kafka Topic: order.placed]
     PaymentService --> Kafka
