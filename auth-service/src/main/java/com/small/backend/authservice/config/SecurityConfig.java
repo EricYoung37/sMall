@@ -1,5 +1,6 @@
 package com.small.backend.authservice.config;
 
+import com.small.backend.authservice.security.CustomAuthenticationEntryPoint;
 import com.small.backend.authservice.security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -12,7 +13,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import security.JwtAuthenticationEntryPoint;
 
 @Configuration
 public class SecurityConfig {
@@ -28,7 +28,7 @@ public class SecurityConfig {
         // HttpSecurity http configures security rules (builder/configurer)
         http
                 .csrf(csrf -> csrf.disable())
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint()))
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint()))
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -45,8 +45,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint() {
-        return new JwtAuthenticationEntryPoint();
+    public CustomAuthenticationEntryPoint customAuthenticationEntryPoint() {
+        return new CustomAuthenticationEntryPoint();
     }
 
     @Bean
