@@ -35,14 +35,14 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public UserAccount getAccountByEmail(String email) {
         return repository.findByEmail(email).orElseThrow(
-                () -> new ResourceNotFoundException("User with email " + email + " not found")
+                () -> new ResourceNotFoundException("User email " + email + " not found")
         );
     }
 
     @Override
     public UserAccount getAccountById(UUID id) {
         return repository.findById(id).orElseThrow(
-                () -> new ResourceNotFoundException("User with ID " + id + " not found")
+                () -> new ResourceNotFoundException("User ID " + id + " not found")
         );
     }
 
