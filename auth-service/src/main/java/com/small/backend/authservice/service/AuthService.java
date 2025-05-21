@@ -6,7 +6,7 @@ import com.small.backend.authservice.entity.UserCredential;
 import java.util.Optional;
 
 public interface AuthService {
-    Optional<UserCredential> register(LoginRequest request);
+    UserCredential register(LoginRequest request);
     String login(LoginRequest request);
     void updatePassword(String token, String email, String newPassword);
     void logout(String token);

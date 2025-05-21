@@ -6,6 +6,7 @@ import com.small.backend.authservice.security.JwtUtil;
 import com.small.backend.authservice.service.AuthService;
 import com.small.backend.authservice.dto.RegistrationRequest;
 import dto.CreateAccountRequest;
+import exception.ResourceAlreadyExistsException;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,33 +58,38 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody @Valid RegistrationRequest request) {
         // 1. Create user credential
-        UserCredential savedUser = authService.register(modelMapper.map(request, LoginRequest.class))
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.INTERNAL_SERVER_ERROR, "Failed to register user credentials."));
-
-        // 2. Create user account in account-service
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set(internalAuthHeader, internalToken);
-            HttpEntity<CreateAccountRequest> entity = new HttpEntity<>(
-                    modelMapper.map(request, CreateAccountRequest.class),
-                    headers);
+            UserCredential savedUser = authService.register(modelMapper.map(request, LoginRequest.class));
 
-            restTemplate.postForEntity("http://localhost:"+accountServicePort+"/api/v1/accounts", entity, Void.class);
-        } catch (RestClientException e) {
-            // Compensate: delete the created user credential to keep data consistent
-            if (savedUser != null) {
-                authService.deleteCredential(savedUser.getEmail());
+            // 2. Create user account in account-service
+            try {
+                HttpHeaders headers = new HttpHeaders();
+                headers.set(internalAuthHeader, internalToken);
+                HttpEntity<CreateAccountRequest> entity = new HttpEntity<>(
+                        modelMapper.map(request, CreateAccountRequest.class),
+                        headers);
+
+                restTemplate.postForEntity("http://localhost:"+accountServicePort+"/api/v1/accounts", entity, Void.class);
+            } catch (RestClientException e) {
+                // Compensate: delete the created user credential to keep data consistent
+                if (savedUser != null) {
+                    authService.deleteCredential(savedUser.getEmail());
+                }
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Failed to create user account. Registration rolled back.");
             }
+            // We may do this creation sequence within a transaction, but that's expensive.
+
+            // We may also try creating an account before the credential and delete the account if credential creation fails.
+            // However, this may result in an account without a credential.
+
+            return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully.");
+        } catch (ResourceAlreadyExistsException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to create user account. Registration rolled back.");
+                    .body("An unexpected error occurred");
         }
-        // We may do this creation sequence within a transaction, but that's expensive.
-
-        // We may also try creating an account before the credential and delete the account if credential creation fails.
-        // However, this may result in an account without a credential.
-
-        return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully.");
     }
 
     @PostMapping("/login")

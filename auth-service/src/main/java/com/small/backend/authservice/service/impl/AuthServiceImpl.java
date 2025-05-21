@@ -6,6 +6,7 @@ import com.small.backend.authservice.entity.UserCredential;
 import com.small.backend.authservice.security.RedisJtiService;
 import com.small.backend.authservice.service.AuthService;
 import com.small.backend.authservice.security.JwtUtil;
+import exception.ResourceAlreadyExistsException;
 import exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
@@ -39,17 +40,14 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Optional<UserCredential> register(LoginRequest request) {
-        try {if (repository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already registered");
+    public UserCredential register(LoginRequest request) {
+        if (repository.existsByEmail(request.getEmail())) {
+            throw new ResourceAlreadyExistsException("User email " + request.getEmail() + " already exists.");
         }
-            UserCredential user = new UserCredential();
-            user.setEmail(request.getEmail());
-            user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-            return Optional.of(repository.save(user));
-        } catch (Exception e) {
-            return Optional.empty();
-        }
+        UserCredential user = new UserCredential();
+        user.setEmail(request.getEmail());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        return repository.save(user);
     }
 
     @Override
