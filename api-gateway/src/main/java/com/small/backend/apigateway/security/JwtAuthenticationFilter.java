@@ -1,8 +1,6 @@
 package com.small.backend.apigateway.security;
 
 import io.jsonwebtoken.security.SignatureException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -21,7 +19,6 @@ import java.nio.charset.StandardCharsets;
 
 @Component
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
-    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtUtil jwtUtil;
     private final RedisJtiService redisJtiService;
 
@@ -51,14 +48,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             // exchange.getResponse().getHeaders().set(HttpHeaders.LOCATION, "/api/v1/auth/login");
             // return exchange.getResponse().setComplete();
 
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            exchange.getResponse().getHeaders().setContentType(MediaType.TEXT_PLAIN);
-
-            String message = "Missing or invalid Authorization header. Expected format: 'Authorization: Bearer <token>'";
-            DataBufferFactory bufferFactory = exchange.getResponse().bufferFactory();
-            DataBuffer buffer = bufferFactory.wrap(message.getBytes(StandardCharsets.UTF_8));
-
-            return exchange.getResponse().writeWith(Mono.just(buffer));
+            return writeResponse(exchange, HttpStatus.UNAUTHORIZED, "User not logged in.");
         }
 
         // Validate JWT
@@ -78,9 +68,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                     .build();
             return chain.filter(mutatedExchange);
         } catch (SignatureException | IllegalArgumentException ex) {
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            // May return a message as in the case of absent token.
-            return exchange.getResponse().setComplete();
+            return writeResponse(exchange, HttpStatus.UNAUTHORIZED, ex.getMessage());
         }
     }
 
@@ -88,5 +76,15 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     @Override
     public int getOrder() {
         return -1; // Higher precedence
+    }
+
+    private static Mono<Void> writeResponse(ServerWebExchange exchange, HttpStatus status, String message) {
+        exchange.getResponse().setStatusCode(status);
+        exchange.getResponse().getHeaders().setContentType(MediaType.TEXT_PLAIN);
+
+        DataBufferFactory bufferFactory = exchange.getResponse().bufferFactory();
+        DataBuffer buffer = bufferFactory.wrap(message.getBytes(StandardCharsets.UTF_8));
+
+        return exchange.getResponse().writeWith(Mono.just(buffer));
     }
 }

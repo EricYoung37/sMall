@@ -5,10 +5,12 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -40,28 +42,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith(AppConstants.BEARER_PREFIX)) {
             final String jwt = authHeader.substring(AppConstants.BEARER_PREFIX.length());
-            final String email = jwtUtil.extractEmail(jwt);
+            try {
+                final String email = jwtUtil.extractEmail(jwt);
 
-            // Each HTTP request creates its own Authentication object per user across multiple requests.
-            // The Authentication object is stored in the SecurityContextHolder for the current thread/request.
-            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                // Each HTTP request creates its own Authentication object per user across multiple requests.
+                // The Authentication object is stored in the SecurityContextHolder for the current thread/request.
+                if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-                if (jwtUtil.validateToken(jwt)) {
-                    // Set userDetails (principal) in the Authentication object.
-                    // Usage: updatePassword() in AuthController.
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    if (jwtUtil.validateToken(jwt)) {
+                        // Set userDetails (principal) in the Authentication object.
+                        // Usage: updatePassword() in AuthController.
+                        UsernamePasswordAuthenticationToken authToken =
+                                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
-                    // Web-related metadata about the request, e.g., remoteAddress, sessionId, etc.
-                    // Retrieved by SecurityContextHolder.getContext().getAuthentication().getDetails();
-                    authToken.setDetails(
-                            new WebAuthenticationDetailsSource().buildDetails(request)
-                    );
+                        // Web-related metadata about the request, e.g., remoteAddress, sessionId, etc.
+                        // Retrieved by SecurityContextHolder.getContext().getAuthentication().getDetails();
+                        authToken.setDetails(
+                                new WebAuthenticationDetailsSource().buildDetails(request)
+                        );
 
-                    SecurityContextHolder.getContext().setAuthentication(authToken); // store the Auth object.
+                        SecurityContextHolder.getContext().setAuthentication(authToken); // store the Auth object.
+                    }
                 }
+            } catch (UsernameNotFoundException | BadCredentialsException ex) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("text/plain");
+                response.getWriter().write(ex.getMessage());
+                return; // Prevent further filter execution.
             }
         }
 

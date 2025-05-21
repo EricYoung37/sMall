@@ -6,8 +6,11 @@ import exception.ResourceNotFoundException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.client.HttpClientErrorException;
 
 @Configuration
 public class ExceptionHandlerConfig {
@@ -20,25 +23,40 @@ public class ExceptionHandlerConfig {
     @ControllerAdvice
     public static class ExceptionHandlerAdvice {
 
-        private final GlobalExceptionHandler delegate;
+        private final GlobalExceptionHandler globalExceptionHandler;
 
-        public ExceptionHandlerAdvice(GlobalExceptionHandler delegate) {
-            this.delegate = delegate;
+        public ExceptionHandlerAdvice(GlobalExceptionHandler globalExceptionHandler) {
+            this.globalExceptionHandler = globalExceptionHandler;
         }
 
         @ExceptionHandler(ResourceNotFoundException.class)
         public ResponseEntity<String> handleResourceNotFound(ResourceNotFoundException ex) {
-            return delegate.handleResourceNotFound(ex);
+            return globalExceptionHandler.handleResourceNotFound(ex);
         }
 
         @ExceptionHandler(ResourceAlreadyExistsException.class)
         public ResponseEntity<String> handleResourceAlreadyExists(ResourceAlreadyExistsException ex) {
-            return delegate.handleResourceAlreadyExists(ex);
+            return globalExceptionHandler.handleResourceAlreadyExists(ex);
+        }
+
+        @ExceptionHandler(AccessDeniedException.class)
+        public ResponseEntity<String> handleAccessDenied(AccessDeniedException ex) {
+            return globalExceptionHandler.handleAccessDenied(ex);
+        }
+
+        @ExceptionHandler(HttpClientErrorException.Unauthorized.class)
+        public ResponseEntity<String> handleUnauthorized(HttpClientErrorException.Unauthorized ex) {
+            return globalExceptionHandler.handleUnauthorized(ex);
+        }
+
+        @ExceptionHandler(BadCredentialsException.class)
+        public ResponseEntity<String> handleBadCredentials(BadCredentialsException ex) {
+            return globalExceptionHandler.handleBadCredentials(ex);
         }
 
         @ExceptionHandler(Exception.class)
         public ResponseEntity<String> handleGenericException(Exception ex) {
-            return delegate.handleGenericException(ex);
+            return globalExceptionHandler.handleGenericException(ex);
         }
     }
 }
