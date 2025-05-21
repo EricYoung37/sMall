@@ -47,3 +47,57 @@ graph TD
     class Redis redis;
     class MySQL_Accounts,MySQL_Credentials,CassandraOrders,MySQL_Payments databases;
 ```
+
+## Environment Variables
+<details>
+<summary>./common/common.env</summary>
+
+```
+API_GATEWAY_PORT=
+AUTH_SERVICE_PORT=
+ACCOUNT_SERVICE_PORT=
+
+MYSQL_USER=
+MYSQL_PWD=
+MYSQL_PORT=
+MYSQL_DB=s_mall
+
+JWT_SECRET=must-be-a-Base64-encoded-secret
+
+INTERNAL_AUTH_TOKEN=
+INTERNAL_AUTH_HEADER=
+
+REDIS_HOST=
+REDIS_PORT=
+REDIS_PWD=
+```
+</details>
+
+<details>
+<summary>./auth-service/.env</summary>
+
+```
+JWT_EXP_MS=
+```
+</details>
+
+
+## Run the App
+### IntelliJ IDEA
+Use IDEA's run button to run these.
+- [docker-compose.yml](docker-compose.yml)
+- [ApiGatewayApplication](api-gateway/src/main/java/com/small/backend/apigateway/ApiGatewayApplication.java)
+- [AccountServiceApplication](account-service/src/main/java/com/small/backend/accountservice/AccountServiceApplication.java)
+- [AuthServiceApplication](auth-service/src/main/java/com/small/backend/authservice/AuthServiceApplication.java)
+
+### Terminal
+The app can also be run from the terminal if IDEA is not available. **Windows users** need to use **Git Bash**.
+```shell
+# project's root directory
+$ docker compose up
+```
+
+```shell
+# in api-gateway/, account-service/, or auth-service/
+$ . run.sh
+```

@@ -1,22 +1,24 @@
 package com.small.backend.apigateway.security;
 
 import io.jsonwebtoken.security.SignatureException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import util.AppConstants;
 
+import java.nio.charset.StandardCharsets;
+
 @Component
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
-    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtUtil jwtUtil;
     private final RedisJtiService redisJtiService;
 
@@ -37,9 +39,16 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
         // Check for Authorization header
         final String authHeader = exchange.getRequest().getHeaders().getFirst(AppConstants.AUTHORIZATION_HEADER);
-        if (authHeader == null || !authHeader.startsWith(AppConstants.BEARER_PREFIX)) {
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete();
+        if (authHeader == null || !authHeader.startsWith(AppConstants.BEARER_PREFIX)) { // absent token
+
+            // Let the frontend handle redirect.
+            // If "Automatically follow redirects" is turned on in Postman,
+            // this will fail because the login endpoint expects a JSON request body.
+            // exchange.getResponse().setStatusCode(HttpStatus.FOUND); // 302 redirect
+            // exchange.getResponse().getHeaders().set(HttpHeaders.LOCATION, "/api/v1/auth/login");
+            // return exchange.getResponse().setComplete();
+
+            return writeResponse(exchange, HttpStatus.UNAUTHORIZED, "User not logged in.");
         }
 
         // Validate JWT
@@ -59,8 +68,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                     .build();
             return chain.filter(mutatedExchange);
         } catch (SignatureException | IllegalArgumentException ex) {
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete();
+            return writeResponse(exchange, HttpStatus.UNAUTHORIZED, ex.getMessage());
         }
     }
 
@@ -68,5 +76,15 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     @Override
     public int getOrder() {
         return -1; // Higher precedence
+    }
+
+    private static Mono<Void> writeResponse(ServerWebExchange exchange, HttpStatus status, String message) {
+        exchange.getResponse().setStatusCode(status);
+        exchange.getResponse().getHeaders().setContentType(MediaType.TEXT_PLAIN);
+
+        DataBufferFactory bufferFactory = exchange.getResponse().bufferFactory();
+        DataBuffer buffer = bufferFactory.wrap(message.getBytes(StandardCharsets.UTF_8));
+
+        return exchange.getResponse().writeWith(Mono.just(buffer));
     }
 }
