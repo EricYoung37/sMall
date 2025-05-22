@@ -67,6 +67,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     }
                 }
             } catch (UsernameNotFoundException | BadCredentialsException ex) {
+                // Uncaught exceptions will be handled by CustomAuthenticationEntryPoint.
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("text/plain");
                 response.getWriter().write(ex.getMessage());

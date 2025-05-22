@@ -17,11 +17,11 @@ graph TD
     OrderService --> CassandraOrders[(Cassandra - Orders)]
     PaymentService --> MySQL_Payments[(MySQL - Payments)]
     
-    AccountService .-> Eureka["Service Discovery (Eureka)"]
-    AuthService .-> Eureka
-    OrderService .-> Eureka
-    PaymentService .-> Eureka
-    APIGateway .-> Eureka
+    AccountService <.-> Eureka["Service Discovery (Eureka)"]
+    AuthService <.-> Eureka
+    OrderService <.-> Eureka
+    PaymentService <.-> Eureka
+    APIGateway <.-> Eureka
 
     AuthService <==> Redis["User JWT (Redis)"]
     APIGateway <==> Redis
@@ -84,11 +84,14 @@ JWT_EXP_MS=
 
 ## Run the App
 ### IntelliJ IDEA
-Use IDEA's run button to run these.
+Use IDEA's run button to run these. Use the **Services** panel (bottom left) to run them all at once.
 - [docker-compose.yml](docker-compose.yml)
+- [ServiceDiscoverer](service-discoverer/src/main/java/com/small/backend/servicediscoverer/ServiceDiscovererApplication.java)
 - [ApiGatewayApplication](api-gateway/src/main/java/com/small/backend/apigateway/ApiGatewayApplication.java)
 - [AccountServiceApplication](account-service/src/main/java/com/small/backend/accountservice/AccountServiceApplication.java)
 - [AuthServiceApplication](auth-service/src/main/java/com/small/backend/authservice/AuthServiceApplication.java)
+
+Order **matters**. Service discoverer must be fully ready before other services can communicate.
 
 ### Terminal
 The app can also be run from the terminal if IDEA is not available. **Windows users** need to use **Git Bash**.
@@ -98,6 +101,7 @@ $ docker compose up
 ```
 
 ```shell
-# in api-gateway/, account-service/, or auth-service/
+# in service-discover/, api-gateway/, /auth-service, etc.
+# Start service-discover first.
 $ . run.sh
 ```
