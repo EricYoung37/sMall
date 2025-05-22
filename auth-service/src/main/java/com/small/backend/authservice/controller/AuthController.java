@@ -19,11 +19,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.server.ResponseStatusException;
 import util.AppConstants;
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/auth")
 public class AuthController {
 
     private final AuthService authService;
@@ -36,9 +35,6 @@ public class AuthController {
 
     private final String AUTHORIZATION_HEADER = AppConstants.AUTHORIZATION_HEADER;
     private final String BEARER_PREFIX = AppConstants.BEARER_PREFIX;
-
-    @Value("${account.service.port}")
-    private String accountServicePort;
 
     @Autowired
     public AuthController(AuthService authService,
@@ -68,8 +64,8 @@ public class AuthController {
                 HttpEntity<CreateAccountRequest> entity = new HttpEntity<>(
                         modelMapper.map(request, CreateAccountRequest.class),
                         headers);
-
-                restTemplate.postForEntity("http://localhost:"+accountServicePort+"/api/v1/accounts", entity, Void.class);
+                // RestTemplate call goes directly to Eureka without going through api-gateway, hence no apiPrefix.
+                restTemplate.postForEntity("http://account-service/accounts", entity, Void.class);
             } catch (RestClientException e) {
                 // Compensate: delete the created user credential to keep data consistent
                 if (savedUser != null) {
