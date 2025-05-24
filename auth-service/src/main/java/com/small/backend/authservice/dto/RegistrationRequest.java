@@ -1,9 +1,7 @@
 package com.small.backend.authservice.dto;
 
-import entity.PaymentMethod;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class RegistrationRequest {
@@ -24,9 +22,6 @@ public class RegistrationRequest {
 
     @NotBlank
     private String billingAddress;
-
-    @NotNull
-    private PaymentMethod paymentMethod;
 
     public String getEmail() {
         return email;
@@ -66,13 +61,5 @@ public class RegistrationRequest {
 
     public void setBillingAddress(String billingAddress) {
         this.billingAddress = billingAddress;
-    }
-
-    public PaymentMethod getPaymentMethod() {
-        return paymentMethod;
-    }
-
-    public void setPaymentMethod(PaymentMethod paymentMethod) {
-        this.paymentMethod = paymentMethod;
     }
 }

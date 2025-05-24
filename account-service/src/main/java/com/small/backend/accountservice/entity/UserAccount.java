@@ -1,6 +1,5 @@
 package com.small.backend.accountservice.entity;
 
-import entity.PaymentMethod;
 import jakarta.persistence.*;
 
 import java.util.UUID;
@@ -24,10 +23,6 @@ public class UserAccount {
 
     @Column(length = 500)
     private String billingAddress;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PaymentMethod paymentMethod;
 
     public UUID getId() {
         return id;
@@ -67,13 +62,5 @@ public class UserAccount {
 
     public void setBillingAddress(String billingAddress) {
         this.billingAddress = billingAddress;
-    }
-
-    public PaymentMethod getPaymentMethod() {
-        return paymentMethod;
-    }
-
-    public void setPaymentMethod(PaymentMethod paymentMethod) {
-        this.paymentMethod = paymentMethod;
     }
 }

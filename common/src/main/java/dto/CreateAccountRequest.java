@@ -1,9 +1,7 @@
 package dto;
 
-import entity.PaymentMethod;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 public class CreateAccountRequest {
     @Email
@@ -18,9 +16,6 @@ public class CreateAccountRequest {
 
     @NotBlank
     private String billingAddress;
-
-    @NotNull
-    private PaymentMethod paymentMethod;
 
     public String getEmail() {
         return email;
@@ -52,13 +47,5 @@ public class CreateAccountRequest {
 
     public void setBillingAddress(String billingAddress) {
         this.billingAddress = billingAddress;
-    }
-
-    public PaymentMethod getPaymentMethod() {
-        return paymentMethod;
-    }
-
-    public void setPaymentMethod(PaymentMethod paymentMethod) {
-        this.paymentMethod = paymentMethod;
     }
 }

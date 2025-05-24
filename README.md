@@ -101,6 +101,13 @@ $ docker compose up
 ```
 
 ```shell
+# in common/
+# this runs mvn clean install for common
+# without this, service modules like /auth-service won't compile
+$ . run.sh
+```
+
+```shell
 # in service-discover/, api-gateway/, /auth-service, etc.
 # Start service-discover first.
 $ . run.sh

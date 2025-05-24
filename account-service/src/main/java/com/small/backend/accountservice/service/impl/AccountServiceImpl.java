@@ -28,7 +28,6 @@ public class AccountServiceImpl implements AccountService {
         user.setUsername(request.getUsername());
         user.setShippingAddress(request.getShippingAddress());
         user.setBillingAddress(request.getBillingAddress());
-        user.setPaymentMethod(request.getPaymentMethod());
         return repository.save(user);
     }
 
@@ -52,7 +51,6 @@ public class AccountServiceImpl implements AccountService {
         user.setUsername(request.getUsername());
         user.setShippingAddress(request.getShippingAddress());
         user.setBillingAddress(request.getBillingAddress());
-        user.setPaymentMethod(request.getPaymentMethod());
         return repository.save(user);
     }
 }
