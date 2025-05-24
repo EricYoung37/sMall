@@ -16,12 +16,14 @@
         <module>account-service</module>
         <module>auth-service</module>
         <module>api-gateway</module>
+        <module>service-discoverer</module>
     </modules>
 
     <properties>
         <jdk.version>17</jdk.version>
         <spring.boot.version>3.4.5</spring.boot.version>
         <spring.cloud.version>2024.0.1</spring.cloud.version>
+        <jjwt.version>0.11.5</jjwt.version>
         <maven.compiler.source>${jdk.version}</maven.compiler.source>
         <maven.compiler.target>${jdk.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

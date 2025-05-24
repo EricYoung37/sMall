@@ -1,8 +1,6 @@
 package com.small.backend.accountservice.dto;
 
-import entity.PaymentMethod;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 public class UpdateAccountRequest {
     @NotBlank
@@ -13,9 +11,6 @@ public class UpdateAccountRequest {
 
     @NotBlank
     private String billingAddress;
-
-    @NotNull
-    private PaymentMethod paymentMethod;
 
     public String getUsername() {
         return username;
@@ -39,13 +34,5 @@ public class UpdateAccountRequest {
 
     public void setBillingAddress(String billingAddress) {
         this.billingAddress = billingAddress;
-    }
-
-    public PaymentMethod getPaymentMethod() {
-        return paymentMethod;
-    }
-
-    public void setPaymentMethod(PaymentMethod paymentMethod) {
-        this.paymentMethod = paymentMethod;
     }
 }
