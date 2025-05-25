@@ -1,9 +1,8 @@
-version: '3.8'
-
 services:
+
   redis:
     image: redis:latest
-    container_name: sMal_redis
+    container_name: sMall_redis
     ports:
       - "6379:6379"
     restart: unless-stopped
@@ -11,8 +10,19 @@ services:
       - common/common.env
     command: ["redis-server", "--requirepass", "${REDIS_PWD}"]
 #    volumes:
-#      - redis-data:/redis-data
+#      - redis-data:/data
 
-## Without top-level volume declaration, an anonymous volume with a random name is created
+  cassandra:
+    build: ./cassandra
+    container_name: sMall_cassandra
+    ports:
+      - "9042:9042"
+    env_file:
+      - common/common.env
+    volumes:
+      - ./cassandra/cassandra.yaml:/etc/cassandra/cassandra.yaml # override
+#      - cassandra-data:/var/lib/cassandra
+
 #volumes:
 #  redis-data:
+#  cassandra-data:
