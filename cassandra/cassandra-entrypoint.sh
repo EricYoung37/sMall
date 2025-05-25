@@ -45,8 +45,15 @@ if cqlsh -u ${CASSANDRA_USER} -p "$DEFAULT_PWD" -e "SELECT release_version FROM 
   log "Default password still in use. Updating superuser password..."
   cqlsh -u ${CASSANDRA_USER} -p "$DEFAULT_PWD" -e "ALTER USER '${CASSANDRA_USER}' WITH PASSWORD '${CASSANDRA_PWD}';"
   log "Superuser password updated."
+
+  # Create the keyspace if not exists
+  log "Ensuring keyspace '${CASSANDRA_KEYSPACE}' exists..."
+  cqlsh -u "${CASSANDRA_USER}" -p "$DEFAULT_PWD" -e "CREATE KEYSPACE IF NOT EXISTS ${CASSANDRA_KEYSPACE} WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 1};"
+  log "Keyspace '${CASSANDRA_KEYSPACE}' is ready."
 else
   log "Superuser password has already been changed."
+
+  # The keyspace was created along with the password update.
 fi
 
 log "Stopping temporary Cassandra process..."
