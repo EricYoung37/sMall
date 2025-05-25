@@ -39,4 +39,4 @@ build/
 .DS_Store
 
 ### Environment Variables ###
-**.env
+**/*.env
