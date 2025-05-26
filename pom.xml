@@ -12,11 +12,12 @@
 
     <!--the submodules that should be built as part of the overall project-->
     <modules>
+        <module>service-discoverer</module>
         <module>common</module>
+        <module>api-gateway</module>
         <module>account-service</module>
         <module>auth-service</module>
-        <module>api-gateway</module>
-        <module>service-discoverer</module>
+        <module>order-service</module>
     </modules>
 
     <properties>
