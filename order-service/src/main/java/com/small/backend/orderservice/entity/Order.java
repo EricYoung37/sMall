@@ -14,6 +14,9 @@ public class Order {
     @PrimaryKey
     private UUID orderId;
 
+    @Column("user_email")
+    private String userEmail;
+
     @Column("status")
     private OrderStatus status;
 
@@ -26,18 +29,14 @@ public class Order {
     @Column("items")
     private List<OrderItem> items;
 
+    @Column("total_price")
+    private Double totalPrice;
+
+    @Column("refund_price")
+    private Double refundPrice;
+
     @Column("shipping_address")
     private String shippingAddress;
-
-    @Transient
-    public Double getTotalPrice() {
-        return items.stream().mapToDouble(item -> item.getUnitPrice() * item.getQuantity()).sum();
-    }
-
-    @Transient
-    public Double getRefundPrice() {
-        return items.stream().mapToDouble(item -> item.getUnitPrice() * item.getRefundQuantity()).sum();
-    }
 
     public UUID getOrderId() {
         return orderId;
@@ -45,6 +44,14 @@ public class Order {
 
     public void setOrderId(UUID orderId) {
         this.orderId = orderId;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 
     public OrderStatus getStatus() {
@@ -77,6 +84,22 @@ public class Order {
 
     public void setItems(List<OrderItem> items) {
         this.items = items;
+    }
+
+    public Double getTotalPrice() {
+        return totalPrice;
+    }
+
+    public void setTotalPrice(Double totalPrice) {
+        this.totalPrice = totalPrice;
+    }
+
+    public Double getRefundPrice() {
+        return refundPrice;
+    }
+
+    public void setRefundPrice(Double refundPrice) {
+        this.refundPrice = refundPrice;
     }
 
     public String getShippingAddress() {
