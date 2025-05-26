@@ -27,6 +27,10 @@ public class GatewayRoutesConfig {
                         .path(apiPrefix + "/auth/**")
                         .filters(f -> f.stripPrefix(2))
                         .uri("lb://auth-service"))
+                .route("order-service", r -> r
+                        .path(apiPrefix + "/orders/**")
+                        .filters(f -> f.stripPrefix(2))
+                        .uri("lb://order-service"))
                 .build();
     }
 }
