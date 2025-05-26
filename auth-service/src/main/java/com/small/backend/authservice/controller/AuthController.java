@@ -53,6 +53,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody @Valid RegistrationRequest request) {
+        // TODO: move the inter-service communication to the service layer.
         // 1. Create user credential
         try {
             UserCredential savedUser = authService.register(modelMapper.map(request, LoginRequest.class));

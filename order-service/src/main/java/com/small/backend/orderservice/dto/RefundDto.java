@@ -2,16 +2,17 @@ package com.small.backend.orderservice.dto;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
-import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
-public class RefundRequest {
+public class RefundDto {
     @NotNull
     private UUID orderId;
 
     @NotEmpty
-    private List<@NotNull RefundItemDto> items;
+    private Map<UUID, @NotNull @Positive Integer> items;
 
     public UUID getOrderId() {
         return orderId;
@@ -21,11 +22,11 @@ public class RefundRequest {
         this.orderId = orderId;
     }
 
-    public List<RefundItemDto> getItems() {
+    public Map<UUID, Integer> getItems() {
         return items;
     }
 
-    public void setItems(List<RefundItemDto> items) {
+    public void setItems(Map<UUID, Integer> items) {
         this.items = items;
     }
 }
