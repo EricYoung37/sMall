@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -31,30 +32,39 @@ public class OrderController {
                 .body(orderService.createOrder(orderDto, auth.getName()));
     }
 
+    @GetMapping
+    public ResponseEntity<List<Order>> getOrders(Authentication auth) {
+        return ResponseEntity.ok(orderService.getOrdersByEmail(auth.getName()));
+    }
+
     @GetMapping("{id}")
-    public ResponseEntity<Order> getOrder(@PathVariable("id") UUID id) {
-        return ResponseEntity.ok(orderService.getOrder(id));
+    public ResponseEntity<Order> getOrder(@PathVariable("id") UUID id, Authentication auth) {
+        return ResponseEntity.ok(orderService.getOrder(auth.getName(), id));
     }
 
     // TODO: Called by the service layer of payment-service upon payment SUCCESS.
     @PostMapping("{id}/paid")
-    public ResponseEntity<Order> markOrderAsPaid(@PathVariable("id") UUID id) {
-        return ResponseEntity.ok(orderService.markOrderAsPaid(id));
+    public ResponseEntity<Order> markOrderAsPaid(@PathVariable("id") UUID id,
+                                                 @RequestParam("userEmail") String email) {
+        return ResponseEntity.ok(orderService.markOrderAsPaid(email, id));
     }
 
     // Suppose a delivery service call this endpoint with an internal auth token (see SecurityConfig).
     @PostMapping("{id}/complete")
-    public ResponseEntity<Order> completeOrder(@PathVariable("id") UUID id) {
-        return ResponseEntity.ok(orderService.completeOrder(id));
+    public ResponseEntity<Order> completeOrder(@PathVariable("id") UUID id,
+                                               @RequestParam("userEmail") String email) {
+        return ResponseEntity.ok(orderService.completeOrder(email, id));
     }
 
     @PostMapping("{id}/cancel")
-    public ResponseEntity<Order> cancelOrder(@PathVariable("id") UUID id) {
-        return ResponseEntity.ok(orderService.cancelOrder(id));
+    public ResponseEntity<Order> cancelOrder(@PathVariable("id") UUID id, Authentication auth) {
+        return ResponseEntity.ok(orderService.cancelOrder(auth.getName(), id));
     }
 
     @PostMapping("{id}/refund")
-    public ResponseEntity<Order> refund(@PathVariable("id") UUID id, RefundDto refundDto) {
-        return ResponseEntity.ok(orderService.refund(id, refundDto));
+    public ResponseEntity<Order> refund(@PathVariable("id") UUID id,
+                                        Authentication auth,
+                                        @RequestBody @Valid RefundDto refundDto) {
+        return ResponseEntity.ok(orderService.refund(auth.getName(), id, refundDto));
     }
 }

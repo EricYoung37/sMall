@@ -40,16 +40,48 @@ done
 
 log "Cassandra is ready. Checking superuser password..."
 
-# Try to connect with default password to see if it still works
+# first time connect or connect with default password to see if it's been updated
 if cqlsh -u ${CASSANDRA_USER} -p "$DEFAULT_PWD" -e "SELECT release_version FROM system.local;" >/dev/null 2>&1; then
+  # Create the keyspace if not exists
+  log "Ensuring keyspace '${CASSANDRA_KEYSPACE}' exists..."
+  cqlsh -u "${CASSANDRA_USER}" -p "$DEFAULT_PWD" -e "
+  CREATE KEYSPACE IF NOT EXISTS ${CASSANDRA_KEYSPACE}
+  WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 1};"
+  log "Keyspace '${CASSANDRA_KEYSPACE}' is ready."
+
+  # UDT order_item
+    log "Ensuring UDT 'order_item' exists..."
+    cqlsh -u "${CASSANDRA_USER}" -p "$DEFAULT_PWD" -k "${CASSANDRA_KEYSPACE}" -e "
+    CREATE TYPE IF NOT EXISTS order_item (
+      item_id uuid,
+      item_name text,
+      quantity int,
+      refund_quantity int,
+      unit_price double,
+      merchant_id uuid
+    );"
+    log "UDT 'order_item' is ready."
+
+  # user_email won't be used as partition key if table is automatically created by order-service
+  log "Ensuring table 'orders' exists with proper primary key..."
+  cqlsh -u "${CASSANDRA_USER}" -p "$DEFAULT_PWD" -k "${CASSANDRA_KEYSPACE}" -e "
+  CREATE TABLE IF NOT EXISTS orders (
+    user_email text,
+    order_id uuid,
+    status text,
+    created_at timestamp,
+    updated_at timestamp,
+    items list<frozen<order_item>>,
+    total_price double,
+    refund_price double,
+    shipping_address text,
+    PRIMARY KEY (user_email, order_id)
+  );"
+  log "Table 'orders' is ready."
+
   log "Default password still in use. Updating superuser password..."
   cqlsh -u ${CASSANDRA_USER} -p "$DEFAULT_PWD" -e "ALTER USER '${CASSANDRA_USER}' WITH PASSWORD '${CASSANDRA_PWD}';"
   log "Superuser password updated."
-
-  # Create the keyspace if not exists
-  log "Ensuring keyspace '${CASSANDRA_KEYSPACE}' exists..."
-  cqlsh -u "${CASSANDRA_USER}" -p "$DEFAULT_PWD" -e "CREATE KEYSPACE IF NOT EXISTS ${CASSANDRA_KEYSPACE} WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 1};"
-  log "Keyspace '${CASSANDRA_KEYSPACE}' is ready."
 else
   log "Superuser password has already been changed."
 

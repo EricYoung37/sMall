@@ -50,7 +50,7 @@ graph TD
 
 ## Environment Variables
 <details>
-<summary>./common/common.env</summary>
+<summary>.env</summary>
 
 ```
 API_GATEWAY_PORT=

@@ -8,19 +8,8 @@ import java.util.Map;
 import java.util.UUID;
 
 public class RefundDto {
-    @NotNull
-    private UUID orderId;
-
     @NotEmpty
     private Map<UUID, @NotNull @Positive Integer> items;
-
-    public UUID getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(UUID orderId) {
-        this.orderId = orderId;
-    }
 
     public Map<UUID, Integer> getItems() {
         return items;

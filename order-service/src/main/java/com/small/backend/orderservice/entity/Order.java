@@ -1,6 +1,5 @@
 package com.small.backend.orderservice.entity;
 
-import org.springframework.data.annotation.Transient;
 import org.springframework.data.cassandra.core.mapping.Column;
 import org.springframework.data.cassandra.core.mapping.PrimaryKey;
 import org.springframework.data.cassandra.core.mapping.Table;
@@ -12,10 +11,7 @@ import java.util.UUID;
 @Table("orders")
 public class Order {
     @PrimaryKey
-    private UUID orderId;
-
-    @Column("user_email")
-    private String userEmail;
+    private OrderPrimaryKey key;
 
     @Column("status")
     private OrderStatus status;
@@ -38,20 +34,12 @@ public class Order {
     @Column("shipping_address")
     private String shippingAddress;
 
-    public UUID getOrderId() {
-        return orderId;
+    public OrderPrimaryKey getKey() {
+        return key;
     }
 
-    public void setOrderId(UUID orderId) {
-        this.orderId = orderId;
-    }
-
-    public String getUserEmail() {
-        return userEmail;
-    }
-
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
+    public void setKey(OrderPrimaryKey key) {
+        this.key = key;
     }
 
     public OrderStatus getStatus() {

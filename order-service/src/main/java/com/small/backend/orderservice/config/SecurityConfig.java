@@ -44,7 +44,10 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint()))
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                         .requestMatchers(HttpMethod.POST, "/orders/{id}/complete").access(internalCallAuthorizationManager())
+                        .requestMatchers(HttpMethod.POST,
+                                "/orders/*/paid",
+                                "/orders/*/complete")
+                        .access(internalCallAuthorizationManager())
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(gatewayHeaderAuthFilter, UsernamePasswordAuthenticationFilter.class);
