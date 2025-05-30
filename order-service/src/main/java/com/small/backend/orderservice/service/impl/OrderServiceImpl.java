@@ -5,12 +5,16 @@ import com.small.backend.orderservice.dto.OrderDto;
 import com.small.backend.orderservice.dto.RefundDto;
 import com.small.backend.orderservice.entity.Order;
 import com.small.backend.orderservice.entity.OrderItem;
+import com.small.backend.orderservice.entity.OrderPrimaryKey;
 import com.small.backend.orderservice.entity.OrderStatus;
 import com.small.backend.orderservice.service.OrderService;
 import exception.ResourceNotFoundException;
-import jakarta.ws.rs.BadRequestException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
@@ -20,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImpl implements OrderService {
+    private static final Logger log = LoggerFactory.getLogger(OrderServiceImpl.class);
     private OrderRepository orderRepository;
 
     @Autowired
@@ -30,8 +35,12 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order createOrder(OrderDto orderDto, String userEmail) {
         Order order = new Order();
-        order.setOrderId(UUID.randomUUID());
-        order.setUserEmail(userEmail);
+
+        OrderPrimaryKey key = new OrderPrimaryKey();
+        key.setUserEmail(userEmail);
+        key.setOrderId(UUID.randomUUID()); // collision is extremely rare
+        order.setKey(key);
+
         order.setStatus(OrderStatus.CREATED);
         order.setCreatedAt(Instant.now());
         order.setUpdatedAt(Instant.now());
@@ -61,17 +70,30 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order getOrder(UUID orderId) {
-        return orderRepository.findById(orderId).orElseThrow(
-                () -> new ResourceNotFoundException("Order with id " + orderId + " not found")
+    public Order getOrder(String userEmail, UUID orderId) {
+        OrderPrimaryKey key = new OrderPrimaryKey();
+        key.setUserEmail(userEmail);
+        key.setOrderId(orderId);
+
+        return orderRepository.findById(key).orElseThrow(
+                () -> new ResourceNotFoundException("Order not found for user: " + userEmail + " and orderId: " + orderId)
         );
     }
 
     @Override
-    public Order markOrderAsPaid(UUID orderId) {
-        Order order = getOrder(orderId);
+    public List<Order> getOrdersByEmail(String email) {
+        List<Order> orders = orderRepository.findByKeyUserEmail(email);
+        if (orders == null || orders.isEmpty()) {
+            throw new ResourceNotFoundException("No orders found for user: " + email);
+        }
+        return orders;
+    }
+
+    @Override
+    public Order markOrderAsPaid(String email, UUID orderId) {
+        Order order = getOrder(email, orderId);
         if (order.getStatus() != OrderStatus.CREATED) {
-            throw new BadRequestException("Order is not in CREATED status");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order is not in CREATED status");
         }
         order.setStatus(OrderStatus.PAID);
         order.setUpdatedAt(Instant.now());
@@ -79,10 +101,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order completeOrder(UUID orderId) {
-        Order order = getOrder(orderId);
+    public Order completeOrder(String email, UUID orderId) {
+        Order order = getOrder(email, orderId);
         if (order.getStatus() != OrderStatus.PAID) {
-            throw new BadRequestException("Order is not in PAID status");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order is not in PAID status");
         }
         order.setStatus(OrderStatus.COMPLETED);
         order.setUpdatedAt(Instant.now());
@@ -90,10 +112,13 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order cancelOrder(UUID orderId) {
-        Order order = getOrder(orderId);
-        if (order.getStatus() != OrderStatus.CREATED || order.getStatus() != OrderStatus.PAID) {
-            throw new BadRequestException("Order is not in CREATED or PAID status (you may request for a refund)");
+    public Order cancelOrder(String email, UUID orderId) {
+        // Assume the order exists as the frontend creates valid requests based on data from the backend.
+        Order order = getOrder(email, orderId);
+
+        if (order.getStatus() != OrderStatus.CREATED && order.getStatus() != OrderStatus.PAID) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Order is in COMPLETED or REFUNDED status (not cancellable)");
         }
 
         // TODO: Call payment-service to update the payment to FULLY_REFUNDED, throws if fails.
@@ -108,28 +133,30 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order refund(UUID orderId, RefundDto refundDto) {
-        Order order = getOrder(orderId);
-        if (order.getStatus() != OrderStatus.COMPLETED) {
-            throw new BadRequestException("Order is not in COMPLETED status (you may cancel it)");
-        } else if (order.getStatus() == OrderStatus.FULLY_REFUNDED) {
-            throw new BadRequestException("Order is already fully refunded");
+    public Order refund(String email, UUID orderId, RefundDto refundDto) {
+        // Reasonable assumptions are made as the frontend creates valid requests based on data from the backend.
+        Order order = getOrder(email, orderId); // Assumption 1: The order exists.
+        if (order.getStatus() == OrderStatus.FULLY_REFUNDED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order is already fully refunded");
+        } else if (order.getStatus() != OrderStatus.PARTIALLY_REFUNDED && order.getStatus() != OrderStatus.COMPLETED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Order has not reached COMPLETED status (you may cancel it)");
         }
 
         // 1. Calculate the refund amount (no mutation as roll-back may occur if payment-service fails).
         Map<UUID, Integer> refundItems = refundDto.getItems();
-        // Reasonable assumptions are made as the frontend can create valid requests based on data from the backend.
         double refundRequestAmount = order.getItems().stream()
-                // Assumption 1: The item id in the refund request exists in the original order.
+                // Assumption 2: The item id in the refund request exists in the original order.
                 .filter(orderItem -> refundItems.containsKey(orderItem.getItemId()))
                 .mapToDouble(orderItem -> {
                     int requestedRefundQty = refundItems.get(orderItem.getItemId());
                     int currentRefundQty = orderItem.getRefundQuantity() == null? 0 : orderItem.getRefundQuantity();
 
-                    // Assumption 2: The refund quantity for each item does not exceed the quantity of the item.
+                    // Assumption 3: The refund quantity for each item does not exceed the quantity of the item.
                     // This check is not needed if assumption 2 holds.
                     if (currentRefundQty + requestedRefundQty > orderItem.getQuantity()) {
-                        throw new BadRequestException("Refund quantity exceeds the quantity of the item");
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "Refund quantity exceeds the quantity of the item");
                     }
 
                     return requestedRefundQty * orderItem.getUnitPrice();
