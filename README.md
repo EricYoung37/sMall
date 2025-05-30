@@ -26,8 +26,8 @@ graph TD
     AuthService <==> Redis["User JWT (Redis)"]
     APIGateway <==> Redis
     
-    OrderService --> Kafka[Kafka Topic: order.placed]
-    PaymentService --> Kafka
+    OrderService <--> Kafka[Kafka Topic: order.placed]
+    PaymentService <--> Kafka
     
     %% Define styles for different categories
     classDef clientApp fill:#f9c2ff,stroke:#6a1b9a;
@@ -50,12 +50,15 @@ graph TD
 
 ## Environment Variables
 <details>
-<summary>./common/common.env</summary>
+<summary>.env</summary>
 
 ```
 API_GATEWAY_PORT=
 AUTH_SERVICE_PORT=
 ACCOUNT_SERVICE_PORT=
+ORDER_SERVICE_PORT=
+
+EUREKA_PORT=8761
 
 MYSQL_USER=
 MYSQL_PWD=
@@ -64,12 +67,17 @@ MYSQL_DB=s_mall
 
 JWT_SECRET=must-be-a-Base64-encoded-secret
 
-INTERNAL_AUTH_TOKEN=
+INTERNAL_AUTH_TOKEN=jwt-recommended
 INTERNAL_AUTH_HEADER=
 
+REDIS_PORT=6379
 REDIS_HOST=
-REDIS_PORT=
 REDIS_PWD=
+
+CASSANDRA_PORT=9042
+CASSANDRA_USER=cassandra
+CASSANDRA_PWD=
+CASSANDRA_KEYSPACE=s_mall
 ```
 </details>
 
@@ -97,6 +105,7 @@ Order **matters**. Service discoverer must be fully ready before other services 
 The app can also be run from the terminal if IDEA is not available. **Windows users** need to use **Git Bash**.
 ```shell
 # project's root directory
+# Cassandra may take around 5 minutes to boot
 $ docker compose up
 ```
 
