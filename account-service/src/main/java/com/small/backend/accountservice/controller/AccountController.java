@@ -27,7 +27,7 @@ public class AccountController {
 
     @PostMapping // internal authentication enforced by auth-service
     public ResponseEntity<UserAccount> create(@RequestBody @Valid CreateAccountRequest request) {
-        return ResponseEntity.ok(service.createAccount(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.createAccount(request));
     }
 
     @GetMapping("/email/{email}")

@@ -1,7 +1,7 @@
-package com.small.backend.accountservice.config;
+package com.small.backend.orderservice.config;
 
-import com.small.backend.accountservice.security.CustomAuthenticationEntryPoint;
-import com.small.backend.accountservice.security.GatewayHeaderAuthFilter;
+import com.small.backend.orderservice.security.CustomAuthenticationEntryPoint;
+import com.small.backend.orderservice.security.GatewayHeaderAuthFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +15,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
 
 @Configuration
 public class SecurityConfig {
@@ -43,7 +44,10 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint()))
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/accounts").access(internalCallAuthorizationManager())
+                        .requestMatchers(HttpMethod.POST,
+                                "/orders/*/paid",
+                                "/orders/*/complete")
+                        .access(internalCallAuthorizationManager())
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(gatewayHeaderAuthFilter, UsernamePasswordAuthenticationFilter.class);

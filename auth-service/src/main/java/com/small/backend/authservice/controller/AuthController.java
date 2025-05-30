@@ -53,6 +53,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody @Valid RegistrationRequest request) {
+        // TODO: move the inter-service communication to the service layer.
         // 1. Create user credential
         try {
             UserCredential savedUser = authService.register(modelMapper.map(request, LoginRequest.class));
@@ -74,6 +75,8 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body("Failed to create user account. Registration rolled back.");
             }
+            // TODO: catch and handle service discovery exceptions.
+
             // We may do this creation sequence within a transaction, but that's expensive.
 
             // We may also try creating an account before the credential and delete the account if credential creation fails.
