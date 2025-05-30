@@ -21,6 +21,21 @@ services:
       - ./cassandra/cassandra.yaml:/etc/cassandra/cassandra.yaml # override
 #      - cassandra-data:/var/lib/cassandra
 
+  mysql:
+    image: mysql:8.0
+    container_name: sMall_mysql
+    ports:
+      - "${MYSQL_PORT}:${MYSQL_PORT}"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PWD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PWD}
+      MYSQL_DATABASE: ${MYSQL_DB}
+    restart: unless-stopped
+#    volumes:
+#      - mysql_data:/var/lib/mysql
+
 #volumes:
 #  redis-data:
 #  cassandra-data:
+#  mysql_data:
