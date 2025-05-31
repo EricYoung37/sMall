@@ -1,4 +1,4 @@
-package entity;
+package com.small.backend.paymentservice.entity;
 
 public enum PaymentMethod {
     CREDIT_CARD,
