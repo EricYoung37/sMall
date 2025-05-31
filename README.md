@@ -12,6 +12,8 @@ graph TD
     APIGateway --> OrderService[Order Service]
     APIGateway --> PaymentService[Payment Service]
     
+    OrderService -- Payment Redirect URL --> ClientApp
+    
     AccountService --> MySQL_Accounts[(MySQL - User Accounts)]
     AuthService --> MySQL_Credentials[(MySQL - User Credentials)]
     OrderService --> CassandraOrders[(Cassandra - Orders)]
@@ -26,8 +28,10 @@ graph TD
     AuthService <==> Redis["User JWT (Redis)"]
     APIGateway <==> Redis
     
-    OrderService <--> Kafka[Kafka Topic: order.placed]
-    PaymentService <--> Kafka
+    OrderService --Order Service Signal--> Kafka[Kafka Topic: order.placed]
+    Kafka -- Order Service Signal --> PaymentService
+    PaymentService -- Payment Redirect URL --> Kafka
+    Kafka -- Payment Redirect URL --> OrderService
     
     %% Define styles for different categories
     classDef clientApp fill:#f9c2ff,stroke:#6a1b9a;
@@ -57,6 +61,7 @@ API_GATEWAY_PORT=
 AUTH_SERVICE_PORT=
 ACCOUNT_SERVICE_PORT=
 ORDER_SERVICE_PORT=
+PAYMENT_SERVICE_PORT=
 
 EUREKA_PORT=8761
 

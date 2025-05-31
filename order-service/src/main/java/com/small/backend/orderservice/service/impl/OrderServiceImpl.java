@@ -63,8 +63,7 @@ public class OrderServiceImpl implements OrderService {
         order.setRefundPrice(calculateRefundPrice(orderItems));
         order.setItems(orderItems);
 
-        // TODO: Call payment-service to create a PENDING payment.
-        // Roll-back if payment-service fails.
+        // TODO: Call /payments to create a CREATED payment, roll back if fails.
 
         return orderRepository.save(order);
     }
@@ -121,7 +120,7 @@ public class OrderServiceImpl implements OrderService {
                     "Order is in COMPLETED or REFUNDED status (not cancellable)");
         }
 
-        // TODO: Call payment-service to update the payment to FULLY_REFUNDED, throws if fails.
+        // TODO: Call /payments/cancel-by-order to update the payment to FULLY_REFUNDED, throws if fails.
 
         // quantity == refundQuantity for each item
         order.getItems().forEach(item -> item.setRefundQuantity(item.getQuantity()));
@@ -137,7 +136,7 @@ public class OrderServiceImpl implements OrderService {
         // Reasonable assumptions are made as the frontend creates valid requests based on data from the backend.
         Order order = getOrder(email, orderId); // Assumption 1: The order exists.
         if (order.getStatus() == OrderStatus.FULLY_REFUNDED) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order is already fully refunded");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order already FULLY_REFUNDED");
         } else if (order.getStatus() != OrderStatus.PARTIALLY_REFUNDED && order.getStatus() != OrderStatus.COMPLETED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Order has not reached COMPLETED status (you may cancel it)");
@@ -162,7 +161,7 @@ public class OrderServiceImpl implements OrderService {
                     return requestedRefundQty * orderItem.getUnitPrice();
                 }).sum();
 
-        // TODO: 2. Call payment-service to update the payment to PARTIALLY_REFUNDED or FULLY_REFUNDED, throws if fails.
+        // TODO: 2. Call /payments/refund-by-order to update the payment to PARTIALLY_REFUNDED or FULLY_REFUNDED, throws if fails.
 
         // 3. Update the order items (now safe to mutate).
         // Making a deep copy for the order and do the calculation and mutation in one traversal has worse performance.
