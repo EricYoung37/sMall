@@ -8,13 +8,15 @@ COMMON_M2_JAR="$HOME/.m2/repository/com/sMall/backend/common/0.0.1-SNAPSHOT/comm
 if [ ! -f "$COMMON_M2_JAR" ]; then
   echo "ERROR: common module is not installed."
   echo "Please run 'mvn clean install' inside the 'sMall/common/' directory first."
+  read -p "Press enter to close..."
   exit 1
 fi
 
-# Check if common module is up-to-date
-if [ "$COMMON_TARGET_JAR" -nt "$COMMON_M2_JAR" ]; then
-  echo "WARNING: Installed common module is outdated."
+# Check if target jar exists and is newer than the installed one
+if [ ! -f "$COMMON_TARGET_JAR" ] || ! cmp -s "$COMMON_TARGET_JAR" "$COMMON_M2_JAR"; then
+  echo "WARNING: Installed common module may be outdated."
   echo "Please run 'mvn clean install' inside the 'sMall/common/' directory to update it."
+  read -p "Press enter to close..."
   exit 1
 fi
 

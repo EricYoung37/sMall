@@ -1,6 +1,6 @@
 package com.small.backend.accountservice.controller;
 
-import dto.CreateAccountRequest;
+import dto.AccountDto;
 import com.small.backend.accountservice.dto.UpdateAccountRequest;
 import com.small.backend.accountservice.entity.UserAccount;
 import com.small.backend.accountservice.service.AccountService;
@@ -26,7 +26,7 @@ public class AccountController {
     }
 
     @PostMapping // internal authentication enforced by auth-service
-    public ResponseEntity<UserAccount> create(@RequestBody @Valid CreateAccountRequest request) {
+    public ResponseEntity<UserAccount> create(@RequestBody @Valid AccountDto request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.createAccount(request));
     }
 
