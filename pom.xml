@@ -12,11 +12,12 @@
 
     <!--the submodules that should be built as part of the overall project-->
     <modules>
-        <module>service-discoverer</module>
         <module>common</module>
+        <module>service-discoverer</module>
         <module>api-gateway</module>
         <module>account-service</module>
         <module>auth-service</module>
+        <module>payment-service</module>
         <module>order-service</module>
     </modules>
 
@@ -54,5 +55,18 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <!--submodules do not need to explicitly specify plugin versions-->
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring.boot.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 
 </project>
