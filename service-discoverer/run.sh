@@ -1,3 +1,3 @@
 #!/bin/bash
-export $(cat ../common/common.env | xargs)
+export $(cat ../.env | xargs)
 mvn spring-boot:run
