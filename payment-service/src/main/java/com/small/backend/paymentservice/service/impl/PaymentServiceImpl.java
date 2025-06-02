@@ -24,7 +24,12 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public String createPayment(UUID orderId, Double totalPrice) {
+        if (paymentRepository.existsByOrderId(orderId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Payment for order " + orderId + " already exists.");
+        }
         Payment payment = new Payment();
+        payment.setOrderId(orderId);
         payment.setPaymentStatus(PaymentStatus.CREATED);
         payment.setTotalPrice(totalPrice);
         payment.setRefundPrice(0.0);
@@ -56,6 +61,7 @@ public class PaymentServiceImpl implements PaymentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Payment status not in CREATED.");
         }
         payment.setPaymentMethod(paymentMethod);
+        payment.setPaymentStatus(PaymentStatus.SUCCESS);
 
         // TODO: call /orders/{orderId}/paid, roll back if fails.
 
@@ -65,9 +71,12 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public Payment cancelByOrderId(UUID orderId) {
         Payment payment = getPaymentByOrderId(orderId);
-        if (payment.getPaymentStatus() != PaymentStatus.SUCCESS) {
+        if (payment.getPaymentStatus() == PaymentStatus.FULLY_REFUNDED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Payment already FULLY_REFUNDED.");
+        } else if (payment.getPaymentStatus() == PaymentStatus.CREATED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Payment not SUCCESS yet.");
         }
+        payment.setRefundPrice(payment.getTotalPrice());
         payment.setPaymentStatus(PaymentStatus.FULLY_REFUNDED);
         return paymentRepository.save(payment);
     }

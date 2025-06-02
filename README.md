@@ -28,7 +28,7 @@ graph TD
     AuthService <==> Redis["User JWT (Redis)"]
     APIGateway <==> Redis
     
-    OrderService --Order Service Signal--> Kafka[Kafka Topic: order.placed]
+    OrderService --Order Service Signal--> Kafka[Kafka Topic: order_payment]
     Kafka -- Order Service Signal --> PaymentService
     PaymentService -- Payment Redirect URL --> Kafka
     Kafka -- Payment Redirect URL --> OrderService

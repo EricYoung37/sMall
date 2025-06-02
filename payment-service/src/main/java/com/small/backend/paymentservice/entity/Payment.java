@@ -15,6 +15,9 @@ public class Payment {
     private UUID id;
 
     @Column(nullable = false)
+    private UUID orderId;
+
+    @Column(nullable = false)
     private PaymentStatus paymentStatus;
 
     @Column(nullable = false)
@@ -38,6 +41,14 @@ public class Payment {
 
     public void setId(UUID id) {
         this.id = id;
+    }
+
+    public UUID getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(UUID orderId) {
+        this.orderId = orderId;
     }
 
     public PaymentStatus getPaymentStatus() {
