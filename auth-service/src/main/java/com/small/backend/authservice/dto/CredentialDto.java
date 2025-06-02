@@ -3,7 +3,7 @@ package com.small.backend.authservice.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-public class LoginRequest {
+public class CredentialDto {
 
     @Email
     @NotBlank

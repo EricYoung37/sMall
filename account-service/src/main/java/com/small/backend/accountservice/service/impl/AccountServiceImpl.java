@@ -1,7 +1,7 @@
 package com.small.backend.accountservice.service.impl;
 
 import com.small.backend.accountservice.dao.UserAccountRepository;
-import dto.CreateAccountRequest;
+import dto.AccountDto;
 import com.small.backend.accountservice.dto.UpdateAccountRequest;
 import com.small.backend.accountservice.entity.UserAccount;
 import com.small.backend.accountservice.service.AccountService;
@@ -22,7 +22,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public UserAccount createAccount(CreateAccountRequest request) {
+    public UserAccount createAccount(AccountDto request) {
         UserAccount user = new UserAccount();
         user.setEmail(request.getEmail());
         user.setUsername(request.getUsername());
