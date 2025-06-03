@@ -5,8 +5,10 @@ import com.small.backend.paymentservice.entity.Payment;
 import com.small.backend.paymentservice.entity.PaymentMethod;
 import com.small.backend.paymentservice.entity.PaymentStatus;
 import com.small.backend.paymentservice.service.PaymentService;
+import exception.ResourceAlreadyExistsException;
 import exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,10 +26,6 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public String createPayment(UUID orderId, Double totalPrice) {
-        if (paymentRepository.existsByOrderId(orderId)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Payment for order " + orderId + " already exists.");
-        }
         Payment payment = new Payment();
         payment.setOrderId(orderId);
         payment.setPaymentStatus(PaymentStatus.CREATED);
@@ -35,9 +33,11 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setRefundPrice(0.0);
         payment.setPaymentMethod(PaymentMethod.CREDIT_CARD); // initial value
 
-        Payment savedPayment = paymentRepository.save(payment);
-
-        return savedPayment.getId().toString();
+        try {
+            return paymentRepository.save(payment).getId().toString();
+        } catch (DataIntegrityViolationException ex) {
+            throw new ResourceAlreadyExistsException("Payment for order " + orderId + " already exists.");
+        }
     }
 
     @Override

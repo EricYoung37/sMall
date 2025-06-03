@@ -11,6 +11,7 @@ import exception.ResourceAlreadyExistsException;
 import exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.access.AccessDeniedException;
@@ -54,13 +55,14 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public UserCredential register(CredentialDto request) {
-        if (repository.existsByEmail(request.getEmail())) {
-            throw new ResourceAlreadyExistsException("User email " + request.getEmail() + " already exists.");
-        }
         UserCredential user = new UserCredential();
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        return repository.save(user);
+        try {
+            return repository.save(user);
+        } catch (DataIntegrityViolationException ex) {
+            throw new ResourceAlreadyExistsException("User email " + request.getEmail() + " already exists.");
+        }
     }
 
     @Override
