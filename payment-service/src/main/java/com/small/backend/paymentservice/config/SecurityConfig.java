@@ -37,10 +37,6 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint()))
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST,
-                                "/payments",
-                                "/payments/cancel-by-order",
-                                "/payments/refund-by-order").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(gatewayHeaderAuthFilter, UsernamePasswordAuthenticationFilter.class);
