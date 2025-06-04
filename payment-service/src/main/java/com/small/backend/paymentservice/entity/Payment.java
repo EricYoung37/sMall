@@ -14,8 +14,8 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true)
-    private String userEmail;
+    @Column(nullable = false)
+    private String userEmail; // just for auditing, thus not unique
 
     @Column(nullable = false, unique = true)
     private UUID orderId;

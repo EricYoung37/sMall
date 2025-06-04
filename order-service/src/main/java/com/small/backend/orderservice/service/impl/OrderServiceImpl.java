@@ -143,9 +143,10 @@ public class OrderServiceImpl implements OrderService {
         // Assume the order exists as the frontend creates valid requests based on data from the backend.
         Order order = getOrder(email, orderId);
 
-        if (order.getStatus() != OrderStatus.CREATED && order.getStatus() != OrderStatus.PAID) {
+        // Only paid orders that are not completed (not delivered) can be canceled.
+        if (order.getStatus() != OrderStatus.PAID) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Order is in COMPLETED or REFUNDED status (not cancellable)");
+                    "Order is not cancellable, status: " + order.getStatus());
         }
 
         try {
@@ -174,7 +175,7 @@ public class OrderServiceImpl implements OrderService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order already FULLY_REFUNDED");
         } else if (order.getStatus() != OrderStatus.PARTIALLY_REFUNDED && order.getStatus() != OrderStatus.COMPLETED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Order has not reached COMPLETED status (you may cancel it)");
+                    "Order has not reached COMPLETED status");
         }
 
         // 1. Calculate the refund amount (no mutation as roll-back may occur if payment-service fails).
