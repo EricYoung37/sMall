@@ -5,39 +5,33 @@
 
 ```mermaid
 graph TD
-    ClientApp[Client Application] --> APIGateway[API Gateway]
+    ClientApp["Client Application"] --> APIGateway[API Gateway]
+    
+    APIGateway <--> Eureka[Eureka - Service Discovery]
+    Eureka <.-> AuthService["Authentication Service (JWT Issuer)"]
+    Eureka <.-> AccountService[Account Service]
+    Eureka <.-> OrderService[Order Service]
+    Eureka <.-> PaymentService[Payment Service]
 
-    APIGateway --> AuthService["Authentication Service (JWT Issuer)"]
-    APIGateway --> AccountService[Account Service]
-    APIGateway --> OrderService[Order Service]
-    APIGateway --> PaymentService[Payment Service]
+    AuthService --> MySQL_Credentials[MySQL - User Credentials]
+    AuthService <==> Redis["Redis - User JWT Store"]
+    APIGateway ==> Redis
     
-    OrderService -- "Payment Id (to be Converted to Redirect URL)" --> ClientApp
-    
-    AccountService --> MySQL_Accounts[(MySQL - User Accounts)]
-    AuthService --> MySQL_Credentials[(MySQL - User Credentials)]
-    OrderService --> CassandraOrders[(Cassandra - Orders)]
-    PaymentService --> MySQL_Payments[(MySQL - Payments)]
-    
-    AccountService <.-> Eureka["Service Discovery (Eureka)"]
-    AuthService <.-> Eureka
-    OrderService <.-> Eureka
-    PaymentService <.-> Eureka
-    APIGateway <.-> Eureka
-
-    AuthService <==> Redis["User JWT (Redis)"]
-    APIGateway <==> Redis
+    AccountService --> MySQL_Accounts[MySQL - User Accounts]
+    OrderService --> CassandraOrders[Cassandra - Orders]
+    PaymentService --> MySQL_Payments[MySQL - Payments]
     
     OrderService --Order Service Signal--> Kafka
     Kafka --Order Service Signal--> PaymentService
     PaymentService --Payment Id--> Kafka
     Kafka --Payment Id--> OrderService
+    OrderService -- "Payment Id (to be Converted to Redirect URL)" --> ClientApp
     
     %% Define styles for different categories
     classDef clientApp fill:#f9c2ff,stroke:#6a1b9a;
     classDef apiGateway fill:#d1a7f7;
-    classDef services fill:#90caf9,stroke:#1e88e5;
-    classDef serviceDiscovery fill:#a5d6a7,stroke:#388e3c;
+    classDef serviceDiscovery fill:#90caf9,stroke:#1e88e5;
+    classDef services fill:#a5d6a7,stroke:#388e3c;
     classDef kafka fill:#ff7043,stroke:#bf360c;
     classDef redis fill:#ef9a9a,stroke:#c62828;
     classDef databases fill:#ffe082,stroke:#fbc02d;
@@ -109,8 +103,11 @@ Use IDEA's run button to run these. Use the **Services** panel (bottom left) to 
 - [ApiGatewayApplication](api-gateway/src/main/java/com/small/backend/apigateway/ApiGatewayApplication.java)
 - [AccountServiceApplication](account-service/src/main/java/com/small/backend/accountservice/AccountServiceApplication.java)
 - [AuthServiceApplication](auth-service/src/main/java/com/small/backend/authservice/AuthServiceApplication.java)
+- [PaymentServiceApplication](payment-service/src/main/java/com/small/backend/paymentservice/PaymentServiceApplication.java)
+- [OrderServiceApplication](order-service/src/main/java/com/small/backend/orderservice/OrderServiceApplication.java)
 
-Order **matters**. Service discoverer must be fully ready before other services can communicate.
+Order **matters**.
+**Some services** (e.g., Eureka, API gateway) and the **Cassandra** database must be fully ready before other services can communicate with them.
 
 ### Terminal
 The app can also be run from the terminal if IDEA is not available. **Windows users** need to use **Git Bash**.
@@ -136,19 +133,11 @@ $ ./run.sh
 ```
 
 ## Helpful Commands
-### Windows Port Access Denied
-If this issue occurs when running a container
-```
-An attempt was made to access a socket in a way forbidden by its access permissions
-```
-
-Run Command Prompt or PowerShell as administrator and issue the commands below
-```
-net stop winnat
-net start winnat
-```
 
 ### Cassandra
+
+These commands may be issued in the Docker container's shell.
+
 ```
 -- Log in to Cassandra with the specified username and password
 cqlsh -u cassandra -p $CASSANDRA_PASSWORD
@@ -168,6 +157,9 @@ TRUNCATE orders;
 ```
 
 ### MySQL
+
+These commands may be issued in the Docker container's shell.
+
 ```
 -- Log in to MySQL with username `user` and a password variable
 mysql -u user -p $MYSQL_PASSWORD
@@ -183,4 +175,16 @@ SHOW TABLES;
 
 -- Select the first 5 records from `payments`
 SELECT * FROM payments LIMIT 5;
+```
+
+### Windows Port Permissions
+If this issue occurs when running a container
+```
+An attempt was made to access a socket in a way forbidden by its access permissions
+```
+
+Run Command Prompt or PowerShell as administrator and issue the commands below
+```
+net stop winnat
+net start winnat
 ```
