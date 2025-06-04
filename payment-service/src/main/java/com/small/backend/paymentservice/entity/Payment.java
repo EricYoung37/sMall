@@ -15,6 +15,9 @@ public class Payment {
     private UUID id;
 
     @Column(nullable = false, unique = true)
+    private String userEmail;
+
+    @Column(nullable = false, unique = true)
     private UUID orderId;
 
     @Column(nullable = false)
@@ -41,6 +44,14 @@ public class Payment {
 
     public void setId(UUID id) {
         this.id = id;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 
     public UUID getOrderId() {

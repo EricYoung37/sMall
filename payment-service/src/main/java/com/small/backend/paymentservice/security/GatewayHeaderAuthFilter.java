@@ -11,7 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import util.AppConstants;
+import util.AuthConstants;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -26,7 +26,7 @@ public class GatewayHeaderAuthFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         // May use a more sophisticated mechanism instead, e.g., internal token from the API gateway.
-        String email = request.getHeader(AppConstants.USER_EMAIL_HEADER);
+        String email = request.getHeader(AuthConstants.USER_EMAIL_HEADER);
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             // No password or roles needed because auth token is validated in the API gateway.

@@ -13,7 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import util.AppConstants;
+import util.AuthConstants;
 
 @RestController
 @RequestMapping("/auth")
@@ -23,8 +23,8 @@ public class AuthController {
     private final ModelMapper modelMapper;
     private final JwtUtil jwtUtil;
 
-    private final String AUTHORIZATION_HEADER = AppConstants.AUTHORIZATION_HEADER;
-    private final String BEARER_PREFIX = AppConstants.BEARER_PREFIX;
+    private final String AUTHORIZATION_HEADER = AuthConstants.AUTHORIZATION_HEADER;
+    private final String BEARER_PREFIX = AuthConstants.BEARER_PREFIX;
 
     @Autowired
     public AuthController(AuthService authService,

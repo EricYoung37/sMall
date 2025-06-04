@@ -14,7 +14,7 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-import util.AppConstants;
+import util.AuthConstants;
 
 import java.nio.charset.StandardCharsets;
 
@@ -42,8 +42,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         }
 
         // Check for Authorization header
-        final String authHeader = exchange.getRequest().getHeaders().getFirst(AppConstants.AUTHORIZATION_HEADER);
-        if (authHeader == null || !authHeader.startsWith(AppConstants.BEARER_PREFIX)) { // absent token
+        final String authHeader = exchange.getRequest().getHeaders().getFirst(AuthConstants.AUTHORIZATION_HEADER);
+        if (authHeader == null || !authHeader.startsWith(AuthConstants.BEARER_PREFIX)) { // absent token
 
             // Let the frontend handle redirect.
             // If "Automatically follow redirects" is turned on in Postman,
@@ -56,7 +56,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         }
 
         // Validate JWT
-        final String token = authHeader.substring(AppConstants.BEARER_PREFIX.length());
+        final String token = authHeader.substring(AuthConstants.BEARER_PREFIX.length());
         try {
             if (!jwtUtil.validateToken(token) || !redisJtiService.isJtiValid(jwtUtil.extractJti(token))) {
                 throw new SignatureException("Invalid or expired access token.");
@@ -65,7 +65,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             // Mutate the request and update the exchange for downstream services (e.g., account-service).
             // May use a more sophisticated mechanism instead, e.g., internal token from the API gateway.
             ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                    .header(AppConstants.USER_EMAIL_HEADER, jwtUtil.extractEmail(token))
+                    .header(AuthConstants.USER_EMAIL_HEADER, jwtUtil.extractEmail(token))
                     .build();
             ServerWebExchange mutatedExchange = exchange.mutate()
                     .request(mutatedRequest)

@@ -18,16 +18,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 public class SecurityConfig {
-    private final String internalToken;
-    private final String internalAuthHeader;
     private final GatewayHeaderAuthFilter gatewayHeaderAuthFilter;
 
     @Autowired
-    public SecurityConfig(@Value("${internal.auth.token}") String internalToken,
-                          @Value("${internal.auth.header}") String internalAuthHeader,
-                          GatewayHeaderAuthFilter gatewayHeaderAuthFilter) {
-        this.internalToken = internalToken;
-        this.internalAuthHeader = internalAuthHeader;
+    public SecurityConfig(GatewayHeaderAuthFilter gatewayHeaderAuthFilter) {
         this.gatewayHeaderAuthFilter = gatewayHeaderAuthFilter;
     }
 
@@ -46,20 +40,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST,
                                 "/payments",
                                 "/payments/cancel-by-order",
-                                "/payments/refund-by-order").access(internalCallAuthorizationManager())
+                                "/payments/refund-by-order").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(gatewayHeaderAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    }
-
-    private AuthorizationManager<RequestAuthorizationContext> internalCallAuthorizationManager() {
-        return (authenticationSupplier, context) -> {
-            HttpServletRequest request = context.getRequest();
-            String internalHeader = request.getHeader(internalAuthHeader);
-            boolean isGranted = internalToken.equals(internalHeader);
-            return new AuthorizationDecision(isGranted);
-        };
     }
 }
