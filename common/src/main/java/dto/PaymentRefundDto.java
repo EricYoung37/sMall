@@ -1,8 +1,8 @@
-package com.small.backend.paymentservice.dto;
+package dto;
 
 import java.util.UUID;
 
-public class RefundDto {
+public class PaymentRefundDto {
     private UUID orderId;
     private Double refundPrice;
 

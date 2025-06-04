@@ -14,7 +14,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import util.AppConstants;
+import util.AuthConstants;
 
 import java.io.IOException;
 
@@ -38,10 +38,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Recall addFilterBefore() in SecurityFilterChain.
 
         // For the access token.
-        final String authHeader = request.getHeader(AppConstants.AUTHORIZATION_HEADER);
+        final String authHeader = request.getHeader(AuthConstants.AUTHORIZATION_HEADER);
 
-        if (authHeader != null && authHeader.startsWith(AppConstants.BEARER_PREFIX)) {
-            final String jwt = authHeader.substring(AppConstants.BEARER_PREFIX.length());
+        if (authHeader != null && authHeader.startsWith(AuthConstants.BEARER_PREFIX)) {
+            final String jwt = authHeader.substring(AuthConstants.BEARER_PREFIX.length());
             try {
                 final String email = jwtUtil.extractEmail(jwt);
 

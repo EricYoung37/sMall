@@ -4,7 +4,10 @@ import com.small.backend.paymentservice.dao.PaymentRepository;
 import com.small.backend.paymentservice.entity.Payment;
 import com.small.backend.paymentservice.entity.PaymentMethod;
 import com.small.backend.paymentservice.entity.PaymentStatus;
+import com.small.backend.paymentservice.kafka.KafkaPaymentProducer;
 import com.small.backend.paymentservice.service.PaymentService;
+import dto.PaymentOrderResponse;
+import dto.OrderPaymentDto;
 import exception.ResourceAlreadyExistsException;
 import exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,23 +21,35 @@ import java.util.UUID;
 @Service
 public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
+    private final KafkaPaymentProducer kafkaPaymentProducer;
 
     @Autowired
-    public PaymentServiceImpl(PaymentRepository paymentRepository) {
+    public PaymentServiceImpl(PaymentRepository paymentRepository, KafkaPaymentProducer kafkaPaymentProducer) {
         this.paymentRepository = paymentRepository;
+        this.kafkaPaymentProducer = kafkaPaymentProducer;
     }
 
+    // TODO: make this a Kafka listener to receive orderPaymentDto from createOder in order service
     @Override
-    public String createPayment(UUID orderId, Double totalPrice) {
+    public PaymentOrderResponse createPayment(OrderPaymentDto orderPaymentDto) {
+        String userEmail = orderPaymentDto.getUserEmail();
+        UUID orderId = orderPaymentDto.getOrderId();
+
         Payment payment = new Payment();
+        payment.setUserEmail(userEmail);
         payment.setOrderId(orderId);
         payment.setPaymentStatus(PaymentStatus.CREATED);
-        payment.setTotalPrice(totalPrice);
+        payment.setTotalPrice(orderPaymentDto.getTotalPrice());
         payment.setRefundPrice(0.0);
         payment.setPaymentMethod(PaymentMethod.CREDIT_CARD); // initial value
 
         try {
-            return paymentRepository.save(payment).getId().toString();
+            PaymentOrderResponse paymentOrderResponse = new PaymentOrderResponse();
+            paymentOrderResponse.setUserEmail(userEmail);
+            paymentOrderResponse.setOrderId(orderId);
+            paymentOrderResponse.setPaymentId(paymentRepository.save(payment).getId());
+            // TODO: send paymentOrderResponse to Kafka for createOrder in order service
+            return paymentOrderResponse;
         } catch (DataIntegrityViolationException ex) {
             throw new ResourceAlreadyExistsException("Payment for order " + orderId + " already exists.");
         }
@@ -63,7 +78,15 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setPaymentMethod(paymentMethod);
         payment.setPaymentStatus(PaymentStatus.SUCCESS);
 
-        // TODO: call /orders/{orderId}/paid, roll back if fails.
+        try {
+            PaymentOrderResponse paymentOrderResponse = new PaymentOrderResponse();
+            paymentOrderResponse.setUserEmail(payment.getUserEmail());
+            paymentOrderResponse.setOrderId(payment.getOrderId());
+            paymentOrderResponse.setPaymentId(payment.getId());
+            kafkaPaymentProducer.sendPaymentSubmit(paymentOrderResponse).get();
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Failed to notify order service", e);
+        }
 
         return paymentRepository.save(payment);
     }
