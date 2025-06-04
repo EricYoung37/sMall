@@ -29,7 +29,6 @@ public class PaymentServiceImpl implements PaymentService {
         this.kafkaPaymentProducer = kafkaPaymentProducer;
     }
 
-    // TODO: make this a Kafka listener to receive orderPaymentDto from createOder in order service
     @Override
     public PaymentOrderResponse createPayment(OrderPaymentDto orderPaymentDto) {
         String userEmail = orderPaymentDto.getUserEmail();
@@ -48,7 +47,6 @@ public class PaymentServiceImpl implements PaymentService {
             paymentOrderResponse.setUserEmail(userEmail);
             paymentOrderResponse.setOrderId(orderId);
             paymentOrderResponse.setPaymentId(paymentRepository.save(payment).getId());
-            // TODO: send paymentOrderResponse to Kafka for createOrder in order service
             return paymentOrderResponse;
         } catch (DataIntegrityViolationException ex) {
             throw new ResourceAlreadyExistsException("Payment for order " + orderId + " already exists.");
