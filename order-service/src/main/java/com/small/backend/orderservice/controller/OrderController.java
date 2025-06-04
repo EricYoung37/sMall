@@ -1,9 +1,10 @@
 package com.small.backend.orderservice.controller;
 
 import com.small.backend.orderservice.dto.OrderDto;
-import com.small.backend.orderservice.dto.RefundDto;
+import com.small.backend.orderservice.dto.OrderRefundDto;
 import com.small.backend.orderservice.entity.Order;
 import com.small.backend.orderservice.service.OrderService;
+import dto.PaymentOrderResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,8 +26,8 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<Order> createOrder(@RequestBody @Valid OrderDto orderDto,
-                                             Authentication auth){
+    public ResponseEntity<PaymentOrderResponse> createOrder(@RequestBody @Valid OrderDto orderDto,
+                                                            Authentication auth){
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(orderService.createOrder(orderDto, auth.getName()));
@@ -40,13 +41,6 @@ public class OrderController {
     @GetMapping("{id}")
     public ResponseEntity<Order> getOrder(@PathVariable("id") UUID id, Authentication auth) {
         return ResponseEntity.ok(orderService.getOrder(auth.getName(), id));
-    }
-
-    // TODO: Called by the service layer of payment-service upon payment SUCCESS.
-    @PostMapping("{id}/paid")
-    public ResponseEntity<Order> markOrderAsPaid(@PathVariable("id") UUID id,
-                                                 @RequestParam("userEmail") String email) {
-        return ResponseEntity.ok(orderService.markOrderAsPaid(email, id));
     }
 
     // Suppose a delivery service call this endpoint with an internal auth token (see SecurityConfig).
@@ -64,7 +58,7 @@ public class OrderController {
     @PostMapping("{id}/refund")
     public ResponseEntity<Order> refund(@PathVariable("id") UUID id,
                                         Authentication auth,
-                                        @RequestBody @Valid RefundDto refundDto) {
-        return ResponseEntity.ok(orderService.refund(auth.getName(), id, refundDto));
+                                        @RequestBody @Valid OrderRefundDto orderRefundDto) {
+        return ResponseEntity.ok(orderService.refund(auth.getName(), id, orderRefundDto));
     }
 }

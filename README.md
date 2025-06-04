@@ -12,7 +12,7 @@ graph TD
     APIGateway --> OrderService[Order Service]
     APIGateway --> PaymentService[Payment Service]
     
-    OrderService -- Payment Redirect URL --> ClientApp
+    OrderService -- "Payment Id (to be Converted to Redirect URL)" --> ClientApp
     
     AccountService --> MySQL_Accounts[(MySQL - User Accounts)]
     AuthService --> MySQL_Credentials[(MySQL - User Credentials)]
@@ -28,10 +28,10 @@ graph TD
     AuthService <==> Redis["User JWT (Redis)"]
     APIGateway <==> Redis
     
-    OrderService --Order Service Signal--> Kafka[Kafka Topic: order_payment]
-    Kafka -- Order Service Signal --> PaymentService
-    PaymentService -- Payment Redirect URL --> Kafka
-    Kafka -- Payment Redirect URL --> OrderService
+    OrderService --Order Service Signal--> Kafka
+    Kafka --Order Service Signal--> PaymentService
+    PaymentService --Payment Id--> Kafka
+    Kafka --Payment Id--> OrderService
     
     %% Define styles for different categories
     classDef clientApp fill:#f9c2ff,stroke:#6a1b9a;
@@ -83,6 +83,12 @@ CASSANDRA_PORT=9042
 CASSANDRA_USER=cassandra
 CASSANDRA_PWD=
 CASSANDRA_KEYSPACE=s_mall
+
+ZOOKEEPER_PORT=2181
+
+KAFKA_EXTERNAL_PORT=9092
+KAFKA_INTERNAL_PORT=29092
+KAFKA_CONSUMER_GROUP=order-payment-group
 ```
 </details>
 
@@ -127,4 +133,54 @@ $ ./run.sh
 # Start service-discover first.
 # don't use `$ . run.sh` because it can close the current shell immediately upon exit (nothing can be observed)
 $ ./run.sh
+```
+
+## Helpful Commands
+### Windows Port Access Denied
+If this issue occurs when running a container
+```
+An attempt was made to access a socket in a way forbidden by its access permissions
+```
+
+Run Command Prompt or PowerShell as administrator and issue the commands below
+```
+net stop winnat
+net start winnat
+```
+
+### Cassandra
+```
+-- Log in to Cassandra with the specified username and password
+cqlsh -u cassandra -p $CASSANDRA_PASSWORD
+
+-- Show all keyspaces in the cluster
+DESCRIBE KEYSPACES;
+
+-- Show all tables in keyspace `s_mall`
+USE s_mall;
+DESCRIBE orders;
+
+-- Select the first 5 records from `orders`
+SELECT * FROM orders LIMIT 5;
+
+-- Clear all records from `orders`
+TRUNCATE orders;
+```
+
+### MySQL
+```
+-- Log in to MySQL with username `user` and a password variable
+mysql -u user -p $MYSQL_PASSWORD
+
+-- Show all databases
+SHOW DATABASES;
+
+-- Select the `s_mall` database for use
+USE s_mall;
+
+-- Show all tables in the selected database
+SHOW TABLES;
+
+-- Select the first 5 records from `payments`
+SELECT * FROM payments LIMIT 5;
 ```

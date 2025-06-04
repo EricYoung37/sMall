@@ -2,15 +2,18 @@ package com.small.backend.orderservice.service.impl;
 
 import com.small.backend.orderservice.dao.OrderRepository;
 import com.small.backend.orderservice.dto.OrderDto;
-import com.small.backend.orderservice.dto.RefundDto;
+import com.small.backend.orderservice.dto.OrderRefundDto;
 import com.small.backend.orderservice.entity.Order;
 import com.small.backend.orderservice.entity.OrderItem;
 import com.small.backend.orderservice.entity.OrderPrimaryKey;
 import com.small.backend.orderservice.entity.OrderStatus;
+import com.small.backend.orderservice.kafka.KafkaOrderListener;
+import com.small.backend.orderservice.kafka.KafkaOrderProducer;
 import com.small.backend.orderservice.service.OrderService;
+import dto.PaymentOrderResponse;
+import dto.OrderPaymentDto;
+import dto.PaymentRefundDto;
 import exception.ResourceNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,20 +23,22 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImpl implements OrderService {
-    private static final Logger log = LoggerFactory.getLogger(OrderServiceImpl.class);
-    private OrderRepository orderRepository;
+    private final OrderRepository orderRepository;
+    private final KafkaOrderProducer kafkaOrderProducer;
 
     @Autowired
-    public OrderServiceImpl(OrderRepository orderRepository) {
+    public OrderServiceImpl(OrderRepository orderRepository, KafkaOrderProducer kafkaOrderProducer) {
         this.orderRepository = orderRepository;
+        this.kafkaOrderProducer = kafkaOrderProducer;
     }
 
     @Override
-    public Order createOrder(OrderDto orderDto, String userEmail) {
+    public PaymentOrderResponse createOrder(OrderDto orderDto, String userEmail) {
         Order order = new Order();
 
         OrderPrimaryKey key = new OrderPrimaryKey();
@@ -63,9 +68,30 @@ public class OrderServiceImpl implements OrderService {
         order.setRefundPrice(calculateRefundPrice(orderItems));
         order.setItems(orderItems);
 
-        // TODO: Call /payments to create a CREATED payment, roll back if fails.
+        OrderPaymentDto paymentRequest = new OrderPaymentDto();
+        paymentRequest.setUserEmail(userEmail);
+        paymentRequest.setOrderId(order.getKey().getOrderId());
+        paymentRequest.setTotalPrice(order.getTotalPrice());
 
-        return orderRepository.save(order);
+        CompletableFuture<PaymentOrderResponse> future = new CompletableFuture<>();
+        KafkaOrderListener.responseMap.put(order.getKey().getOrderId().toString(), future);
+
+        try {
+            kafkaOrderProducer.sendPaymentRequest(paymentRequest);
+        }
+        catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Failed to notify payment service", e);
+        }
+
+        try {
+            PaymentOrderResponse response = future.get(); // blocks until response received
+            orderRepository.save(order);
+            return response;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Payment service failed or timed out");
+        } finally {
+            KafkaOrderListener.responseMap.remove(order.getKey().getOrderId().toString());
+        }
     }
 
     @Override
@@ -89,11 +115,13 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order markOrderAsPaid(String email, UUID orderId) {
-        Order order = getOrder(email, orderId);
+    public Order markOrderAsPaid(PaymentOrderResponse paymentOrderResponse) {
+        Order order = getOrder(paymentOrderResponse.getUserEmail(), paymentOrderResponse.getOrderId());
+
         if (order.getStatus() != OrderStatus.CREATED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order is not in CREATED status");
         }
+
         order.setStatus(OrderStatus.PAID);
         order.setUpdatedAt(Instant.now());
         return orderRepository.save(order);
@@ -115,12 +143,20 @@ public class OrderServiceImpl implements OrderService {
         // Assume the order exists as the frontend creates valid requests based on data from the backend.
         Order order = getOrder(email, orderId);
 
-        if (order.getStatus() != OrderStatus.CREATED && order.getStatus() != OrderStatus.PAID) {
+        // Only paid orders that are not completed (not delivered) can be canceled.
+        if (order.getStatus() != OrderStatus.PAID) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Order is in COMPLETED or REFUNDED status (not cancellable)");
+                    "Order is not cancellable, status: " + order.getStatus());
         }
 
-        // TODO: Call /payments/cancel-by-order to update the payment to FULLY_REFUNDED, throws if fails.
+        try {
+            PaymentRefundDto cancelRequest = new PaymentRefundDto();
+            cancelRequest.setOrderId(orderId);
+            cancelRequest.setRefundPrice(order.getTotalPrice());
+            kafkaOrderProducer.sendCancelRequest(cancelRequest).get(); // synchronous wait
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Failed to notify payment service", e);
+        }
 
         // quantity == refundQuantity for each item
         order.getItems().forEach(item -> item.setRefundQuantity(item.getQuantity()));
@@ -132,18 +168,18 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order refund(String email, UUID orderId, RefundDto refundDto) {
+    public Order refund(String email, UUID orderId, OrderRefundDto orderRefundDto) {
         // Reasonable assumptions are made as the frontend creates valid requests based on data from the backend.
         Order order = getOrder(email, orderId); // Assumption 1: The order exists.
         if (order.getStatus() == OrderStatus.FULLY_REFUNDED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order already FULLY_REFUNDED");
         } else if (order.getStatus() != OrderStatus.PARTIALLY_REFUNDED && order.getStatus() != OrderStatus.COMPLETED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Order has not reached COMPLETED status (you may cancel it)");
+                    "Order has not reached COMPLETED status");
         }
 
         // 1. Calculate the refund amount (no mutation as roll-back may occur if payment-service fails).
-        Map<UUID, Integer> refundItems = refundDto.getItems();
+        Map<UUID, Integer> refundItems = orderRefundDto.getItems();
         double refundRequestAmount = order.getItems().stream()
                 // Assumption 2: The item id in the refund request exists in the original order.
                 .filter(orderItem -> refundItems.containsKey(orderItem.getItemId()))
@@ -161,7 +197,14 @@ public class OrderServiceImpl implements OrderService {
                     return requestedRefundQty * orderItem.getUnitPrice();
                 }).sum();
 
-        // TODO: 2. Call /payments/refund-by-order to update the payment to PARTIALLY_REFUNDED or FULLY_REFUNDED, throws if fails.
+        try {
+            PaymentRefundDto refundRequest = new PaymentRefundDto();
+            refundRequest.setOrderId(orderId);
+            refundRequest.setRefundPrice(refundRequestAmount);
+            kafkaOrderProducer.sendRefundRequest(refundRequest).get();
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Failed to notify payment service", e);
+        }
 
         // 3. Update the order items (now safe to mutate).
         // Making a deep copy for the order and do the calculation and mutation in one traversal has worse performance.

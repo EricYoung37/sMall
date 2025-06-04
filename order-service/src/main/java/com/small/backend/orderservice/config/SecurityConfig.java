@@ -44,10 +44,9 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint()))
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST,
-                                "/orders/*/paid",
-                                "/orders/*/complete")
-                        .access(internalCallAuthorizationManager())
+                        // suppose a delivery service (internal service) calls this endpoint
+                        .requestMatchers(HttpMethod.POST, "/orders/*/complete")
+                            .access(internalCallAuthorizationManager())
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(gatewayHeaderAuthFilter, UsernamePasswordAuthenticationFilter.class);

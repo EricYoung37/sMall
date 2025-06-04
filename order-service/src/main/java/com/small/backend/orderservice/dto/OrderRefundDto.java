@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Positive;
 import java.util.Map;
 import java.util.UUID;
 
-public class RefundDto {
+public class OrderRefundDto {
     @NotEmpty
     private Map<UUID, @NotNull @Positive Integer> items;
 
