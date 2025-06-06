@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.sMall</groupId>
+    <artifactId>sMall</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <!--the root produces no output artifact — it just manages and builds child modules-->
+    <packaging>pom</packaging>
+
+    <!--the submodules that should be built as part of the overall project-->
+    <modules>
+        <module>common</module>
+        <!--<module>service-discoverer</module>
+        <module>api-gateway</module>
+        <module>account-service</module>
+        <module>auth-service</module>
+        <module>payment-service</module>
+        <module>order-service</module>-->
+    </modules>
+
+    <properties>
+        <jdk.version>17</jdk.version>
+        <spring.boot.version>3.4.5</spring.boot.version>
+        <spring.cloud.version>2024.0.1</spring.cloud.version>
+        <jjwt.version>0.11.5</jjwt.version>
+        <maven.compiler.source>${jdk.version}</maven.compiler.source>
+        <maven.compiler.target>${jdk.version}</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <!--centralized version management for Spring Boot and related dependencies-->
+    <!--submodules do not need to explicitly specify versions for dependencies like spring-boot-starter-web-->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <!--the artifact being referenced is a POM file, not a JAR-->
+                <type>pom</type>
+                <!--only valid inside <dependencyManagement>-->
+                <!--import all the dependency version management information from that external POM (BOM)-->
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring.cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!--submodules do not need to explicitly specify plugin versions-->
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring.boot.version}</version>
+                    <!--create an executable JAR with the `Main-Class` in the manifest-->
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>repackage</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+</project>
