@@ -70,7 +70,6 @@ INTERNAL_AUTH_TOKEN=jwt-recommended
 INTERNAL_AUTH_HEADER=
 
 REDIS_PORT=6379
-REDIS_HOST=
 REDIS_PWD=
 
 CASSANDRA_PORT=9042
@@ -96,7 +95,13 @@ JWT_EXP_MS=
 
 
 ## Run the App
-### IntelliJ IDEA
+### Option 1: Docker Compose for *All*
+```shell
+# docker compose --env-file .env up --build
+$ docker compose up
+```
+
+### Option 2: IntelliJ IDEA for *Spring Boot Services*
 Use IDEA's run button to run these. Use the **Services** panel (bottom left) to run them all at once.
 - [docker-compose.yml](docker-compose.yml)
 - [ServiceDiscoverer](service-discoverer/src/main/java/com/small/backend/servicediscoverer/ServiceDiscovererApplication.java)
@@ -109,7 +114,7 @@ Use IDEA's run button to run these. Use the **Services** panel (bottom left) to 
 Order **matters**.
 **Some services** (e.g., Eureka, API gateway) and the **Cassandra** database must be fully ready before other services can communicate with them.
 
-### Terminal
+### Option 3: Terminal for *Spring Boot Services*
 The app can also be run from the terminal if IDEA is not available. **Windows users** need to use **Git Bash**.
 ```shell
 # project's root directory
@@ -133,6 +138,19 @@ $ ./run.sh
 ```
 
 ## Helpful Commands
+
+### Docker
+
+After rebuilding an image with `docker compose up --build`, the old version becomes `<none>` (dangling).
+
+Clean them up with:
+```shell
+# List dangling images
+$ docker images -f dangling=true
+
+# Prune dangling images
+$ docker image prune
+```
 
 ### Cassandra
 
@@ -175,6 +193,13 @@ SHOW TABLES;
 
 -- Select the first 5 records from `payments`
 SELECT * FROM payments LIMIT 5;
+
+-- Clear `payments`
+-- This will reset all the auto incremental fields
+TRUNCATE TABLE payments;
+
+-- Clear `payments` but no reset
+DELETE FROM payments;
 ```
 
 ### Windows Port Permissions
