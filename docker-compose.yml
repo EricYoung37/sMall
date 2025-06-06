@@ -15,7 +15,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 6
-      start_period: 2m
+      start_period: 4m
 
   mysql:
     image: mysql:8.0
@@ -153,6 +153,10 @@ services:
     build:
       context: .
       dockerfile: order-service/Dockerfile
+    ports:
+      # The ports should NOT be exposed but only be accessed by internal services.
+      # We expose the port as we (from the host) simulate a delivery service calling the "complete order" endpoint.
+      - "${ORDER_SERVICE_PORT}:${ORDER_SERVICE_PORT}"
     environment:
       - SPRING_PROFILES_ACTIVE=docker # switch to application-docker.properties
     depends_on:

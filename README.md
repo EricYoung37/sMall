@@ -114,7 +114,7 @@ Use IDEA's run button to run these. Use the **Services** panel (bottom left) to 
 Order **matters**.
 **Some services** (e.g., Eureka, API gateway) and the **Cassandra** database must be fully ready before other services can communicate with them.
 
-### Option 3: Terminal for *All*
+### Option 3: Terminal for *Spring Boot Services*
 The app can also be run from the terminal if IDEA is not available. **Windows users** need to use **Git Bash**.
 ```shell
 # project's root directory
@@ -193,6 +193,13 @@ SHOW TABLES;
 
 -- Select the first 5 records from `payments`
 SELECT * FROM payments LIMIT 5;
+
+-- Clear `payments`
+-- This will reset all the auto incremental fields
+TRUNCATE TABLE payments;
+
+-- Clear `payments` but no reset
+DELETE FROM payments;
 ```
 
 ### Windows Port Permissions
